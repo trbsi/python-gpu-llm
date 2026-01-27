@@ -58,14 +58,12 @@ echo "FastAPI started with PID $UVICORN_PID"
 # Sleep a few seconds to let FastAPI initialize
 sleep 5
 
-GPU_IP=$(curl -s ifconfig.me)
-INSTANCE_ID=${INSTANCE_ID:-0}
 VPS_ENDPOINT=${VPS_ENDPOINT}
 REGISTRATION_TOKEN=${REGISTRATION_TOKEN:-"super-secret-token"}
 
 curl -X POST "$VPS_ENDPOINT" \
      -H "Authorization: Bearer $REGISTRATION_TOKEN" \
      -H "Content-Type: application/json" \
-     -d "{\"ip\": \"$GPU_IP\", \"port\": 8000, \"instance_id\": \"$INSTANCE_ID\"}"
+     -d "{}"
 
 echo "GPU registered successfully."
