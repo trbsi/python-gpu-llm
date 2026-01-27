@@ -4,8 +4,8 @@ set -e  # exit on error
 # -----------------------------
 # Update system and install essentials
 # -----------------------------
-apt update -y
-apt install -y python3-pip python3-venv git curl build-essential unzip
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv git curl build-essential unzip
 
 # -----------------------------
 # Create and activate virtual environment
@@ -20,9 +20,9 @@ pip install --upgrade pip
 # -----------------------------
 # Install Python libraries
 # -----------------------------
-pip install torch --index-url https://download.pytorch.org/whl/cu118
-pip install transformers sentencepiece peft
-pip install fastapi uvicorn[standard]
+pip install torch==2.10.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+pip install transformers==5.0.0 sentencepiece==0.2.1 peft==0.18.1
+pip install fastapi==0.128.0 uvicorn[standard]==0.40.0
 
 # -----------------------------
 # Navigate to your FastAPI app
@@ -36,8 +36,7 @@ git pull
 # -----------------------------
 # Download LoRA model
 # -----------------------------
-MODEL_URL="https://peachka.net/assets/load_model.zip"
-MODEL_ZIP="load_model.zip"
+MODEL_ZIP="lora_model.zip"
 echo "Downloading model from $MODEL_URL..."
 curl -L -o "$MODEL_ZIP" "$MODEL_URL"
 
@@ -60,7 +59,7 @@ echo "FastAPI started with PID $UVICORN_PID"
 sleep 5
 
 GPU_IP=$(curl -s ifconfig.me)
-INSTANCE_ID=${INSTANCE_ID:-"unknown"}
+INSTANCE_ID=${INSTANCE_ID:-0}
 VPS_ENDPOINT=${VPS_ENDPOINT}
 REGISTRATION_TOKEN=${REGISTRATION_TOKEN:-"super-secret-token"}
 
