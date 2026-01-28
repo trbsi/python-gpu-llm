@@ -66,11 +66,11 @@ echo "FastAPI started with PID $UVICORN_PID on 127.0.0.1:8000"
 # -----------------------------
 # Configure NGINX reverse proxy
 # -----------------------------
-# Remove default NGINX site to avoid server_name conflict
-sudo rm -f /etc/nginx/sites-enabled/default
-
+# Remove default site to avoid server_name conflict
+rm -f /etc/nginx/sites-enabled/default
+# Create FastAPI NGINX config
 NGINX_CONF="/etc/nginx/sites-available/fastapi"
-sudo tee $NGINX_CONF > /dev/null <<EOL
+cat > $NGINX_CONF <<EOL
 server {
     listen 80;
     server_name _;
@@ -84,13 +84,23 @@ server {
 }
 EOL
 
-# Enable your site
-sudo ln -sf $NGINX_CONF /etc/nginx/sites-enabled/fastapi
-# Test NGINX configuration
-sudo nginx -t
-# Reload NGINX without systemd
-sudo nginx -s reload
-echo "NGINX configured and reloaded. FastAPI is now publicly accessible on port 80."
+# Enable FastAPI site
+ln -sf $NGINX_CONF /etc/nginx/sites-enabled/fastapi
+# Remove stale PID if it exists
+rm -f /run/nginx.pid
+# Test NGINX config
+nginx -t
+
+# Start or reload NGINX safely
+if pgrep nginx > /dev/null; then
+    echo "Reloading existing NGINX..."
+    nginx -s reload
+else
+    echo "Starting NGINX..."
+    nginx
+fi
+
+echo "NGINX configured and running. FastAPI is now accessible on port 80."
 
 # -----------------------------
 # Optional: self-register GPU with VPS
