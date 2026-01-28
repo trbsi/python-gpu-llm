@@ -9,6 +9,8 @@ class LlmReplyService:
 
     def __init__(self):
         if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
+            print('Loading model...')
+            
             base_model = "mistralai/Mistral-7B-Instruct-v0.3"
             trained_model = f'./trained_model'
 
@@ -34,6 +36,8 @@ class LlmReplyService:
 
             LlmReplyService._tokenizer = tokenizer
             LlmReplyService._model = model
+
+            print('Model loaded.')
 
     def get_local_reply(self, chat_history: list) -> str:
         tokenizer = LlmReplyService._tokenizer
