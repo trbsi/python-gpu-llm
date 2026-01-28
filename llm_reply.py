@@ -1,7 +1,9 @@
+import os
+
 import torch
 from peft import PeftModel
 from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
-
+from huggingface_hub import login
 
 class LlmReplyService:
     _tokenizer = None
@@ -10,7 +12,8 @@ class LlmReplyService:
     def __init__(self):
         if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
             print('Loading model...')
-            
+
+            login(token=os.getenv("HUGGING_FACE_TOKEN"))
             base_model = "mistralai/Mistral-7B-Instruct-v0.3"
             trained_model = f'./trained_model'
 
