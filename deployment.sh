@@ -60,7 +60,7 @@ BUGSNAG_API_KEY=$BUGSNAG_API_KEY
 HUGGING_FACE_TOKEN=$HUGGING_FACE_TOKEN
 EOL
 
-echo ".env file created with BUGSNAG_API_KEY"
+echo ".env file created"
 
 # -----------------------------
 # Start FastAPI in background (localhost only)
