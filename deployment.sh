@@ -25,6 +25,7 @@ pip install transformers==5.0.0 sentencepiece==0.2.1 peft==0.18.1
 pip install fastapi==0.128.0 uvicorn[standard]==0.40.0
 pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
+pip install -U bitsandbytes
 
 # -----------------------------
 # Navigate to your FastAPI app
