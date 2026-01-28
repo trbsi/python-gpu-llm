@@ -72,7 +72,7 @@ rm -f /etc/nginx/sites-enabled/default
 NGINX_CONF="/etc/nginx/sites-available/fastapi"
 cat > $NGINX_CONF <<EOL
 server {
-    listen 80;
+    listen 8080;
     server_name _;
 
     location / {
