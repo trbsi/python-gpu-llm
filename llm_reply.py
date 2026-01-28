@@ -50,7 +50,7 @@ class LlmReplyService:
         input_text = tokenizer.apply_chat_template(
             chat_history,
             tokenize=False,
-            system_message="Assistant should respond in short, casual sentences.",
+            # system_message="Assistant should respond in short, casual sentences.",
             add_generation_prompt=True
         )
 
@@ -58,7 +58,7 @@ class LlmReplyService:
 
         output = model.generate(
             **input_tokens,
-            max_new_tokens=50,
+            max_new_tokens=100,
             temperature=0.7,
             do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
