@@ -59,9 +59,9 @@ echo ".env file created with BUGSNAG_API_KEY"
 # -----------------------------
 # Start FastAPI in background (localhost only)
 # -----------------------------
-exec uvicorn main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+exec uvicorn main:app --host 127.0.0.1 --port 8080 > uvicorn.log 2>&1 &
 UVICORN_PID=$!
-echo "FastAPI started with PID $UVICORN_PID on 127.0.0.1:8000"
+echo "FastAPI started with PID $UVICORN_PID on 127.0.0.1:8080"
 
 # -----------------------------
 # Optional: self-register GPU with VPS
