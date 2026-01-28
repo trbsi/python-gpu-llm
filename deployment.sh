@@ -81,5 +81,5 @@ curl -X POST "$VPS_ENDPOINT" \
 echo "Preload model."
 curl -X POST "http://localhost:8000/reply" \
      -H "Content-Type: application/json" \
-     -d "{}"
+     -d "[{'role': 'user', 'content': 'Hi'}]"
 
