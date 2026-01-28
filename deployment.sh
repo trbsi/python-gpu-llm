@@ -59,48 +59,9 @@ echo ".env file created with BUGSNAG_API_KEY"
 # -----------------------------
 # Start FastAPI in background (localhost only)
 # -----------------------------
-nohup uvicorn main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+exec uvicorn main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
 UVICORN_PID=$!
 echo "FastAPI started with PID $UVICORN_PID on 127.0.0.1:8000"
-
-# -----------------------------
-# Configure NGINX reverse proxy
-# -----------------------------
-# Remove default site to avoid server_name conflict
-rm -f /etc/nginx/sites-enabled/default
-# Create FastAPI NGINX config
-NGINX_CONF="/etc/nginx/sites-available/fastapi"
-cat > $NGINX_CONF <<EOL
-server {
-    listen 8080;
-    server_name _;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-EOL
-
-# Enable FastAPI site
-ln -sf $NGINX_CONF /etc/nginx/sites-enabled/fastapi
-# Remove stale PID if it exists
-rm -f /run/nginx.pid
-# Test NGINX config
-nginx -t
-
-# Start or reload NGINX safely
-if pgrep nginx > /dev/null; then
-    echo "Reloading existing NGINX..."
-    nginx -s reload
-else
-    echo "Starting NGINX..."
-    nginx
-fi
-
-echo "NGINX configured and running. FastAPI is now accessible on port 80."
 
 # -----------------------------
 # Optional: self-register GPU with VPS
