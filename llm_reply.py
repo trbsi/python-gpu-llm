@@ -15,7 +15,7 @@ class LlmReplyService:
             print('Loading model...')
 
             login(token=os.getenv("HUGGING_FACE_TOKEN"))
-            base_model = "mistralai/Mistral-7B-Instruct-v0.3"
+            base_model = "mistralai/Ministral-8B-Instruct-2410"
             trained_model = f'./trained_model'
 
             bnb_config = BitsAndBytesConfig(
