@@ -1,18 +1,16 @@
-import requests
 import torch
 from peft import PeftModel
 from transformers import AutoTokenizer, AutoModel
+
 
 class LlmReplyService:
     _tokenizer = None
     _model = None
 
     def __init__(self):
-        self.prepare_messages_service = PrepareMessagesService()
-
         if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
             base_model = "mistralai/Mistral-7B-Instruct-v0.3"
-            trained_model = f'{settings.BASE_DIR}/trained_model'
+            trained_model = f'./trained_model'
 
             tokenizer = AutoTokenizer.from_pretrained(base_model)
             model = AutoModel.from_pretrained(base_model, dtype=torch.float16, device_map={'': 'cuda'})
