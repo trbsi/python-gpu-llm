@@ -1,9 +1,10 @@
 import os
 
 import torch
-from peft import PeftModel
-from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 from huggingface_hub import login
+from peft import PeftModel
+from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM
+
 
 class LlmReplyService:
     _tokenizer = None
@@ -25,7 +26,7 @@ class LlmReplyService:
             )
 
             tokenizer = AutoTokenizer.from_pretrained(base_model)
-            model = AutoModel.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(
                 base_model,
                 quantization_config=bnb_config,
                 device_map='cuda'
