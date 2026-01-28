@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 import bugsnag
 from dotenv import load_dotenv
@@ -6,8 +7,21 @@ from fastapi import FastAPI, Body
 
 from llm_reply import LlmReplyService
 
-app = FastAPI()
 load_dotenv()
+
+llm_service: None | LlmReplyService = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global llm_service
+    llm_service = LlmReplyService()  # loads model once per process
+    yield
+    print("Shutting down: cleanup if needed")
+
+
+app = FastAPI(lifespan=lifespan)
+
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
 bugsnag.configure(
     api_key=os.getenv("BUGSNAG_API_KEY"),
@@ -29,8 +43,7 @@ def health():
 @app.post("/reply")
 def reply(data: list = Body(...)):
     try:
-        service = LlmReplyService()
-        result = service.get_local_reply(data)
+        result = llm_service.get_local_reply(data)
         return {'message': result}
     except Exception as e:
         bugsnag.notify(e)

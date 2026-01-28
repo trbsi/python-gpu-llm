@@ -82,9 +82,3 @@ curl -X POST "$VPS_ENDPOINT" \
      -H "Authorization: Bearer $REGISTRATION_TOKEN" \
      -H "Content-Type: application/json" \
      -d "{}"
-
-echo "Preload model."
-curl -X POST "http://localhost:8000/reply" \
-     -H "Content-Type: application/json" \
-     -d "[{\"role\": \"user\", \"content\": \"Hi\"}]"
-
