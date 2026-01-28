@@ -21,10 +21,14 @@ pip install --upgrade pip
 # Install Python libraries
 # -----------------------------
 pip install torch==2.10.0
-pip install transformers==5.0.0 sentencepiece==0.2.1 peft==0.18.1
-pip install fastapi==0.128.0 uvicorn[standard]==0.40.0
+pip install transformers==5.0.0
+pip install sentencepiece==0.2.1
+pip install peft==0.18.1
+pip install fastapi==0.128.0
+pip install uvicorn[standard]==0.40.0
 pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
+pip install huggingface-hub==1.3.4
 pip install -U bitsandbytes
 
 # -----------------------------
@@ -82,5 +86,5 @@ curl -X POST "$VPS_ENDPOINT" \
 echo "Preload model."
 curl -X POST "http://localhost:8000/reply" \
      -H "Content-Type: application/json" \
-     -d "[{'role': 'user', 'content': 'Hi'}]"
+     -d "[{\"role\": \"user\", \"content\": \"Hi\"}]"
 
