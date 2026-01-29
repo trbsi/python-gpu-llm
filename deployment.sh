@@ -44,8 +44,8 @@ git pull
 # Download LoRA model
 # -----------------------------
 MODEL_ZIP="lora_model.zip"
-echo "Downloading model from $MODEL_URL..."
-curl -L -o "$MODEL_ZIP" "$MODEL_URL"
+echo "Downloading model from $MODEL_ZIP_URL..."
+curl -L -o "$MODEL_ZIP" "$MODEL_ZIP_URL"
 
 echo "Unzipping $MODEL_ZIP into current directory..."
 unzip -o "$MODEL_ZIP" -d .
@@ -58,6 +58,7 @@ echo "Model downloaded and extracted."
 cat > .env <<EOL
 BUGSNAG_API_KEY=$BUGSNAG_API_KEY
 HUGGING_FACE_TOKEN=$HUGGING_FACE_TOKEN
+MODEL_NAME=$MODEL_NAME
 EOL
 
 echo ".env file created"
