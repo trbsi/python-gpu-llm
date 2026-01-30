@@ -6,8 +6,7 @@ set -e  # exit on error
 # -----------------------------
 sudo apt update
 sudo apt install -y \
-  python3 python3-pip python3-venv \
-  git curl build-essential unzip nginx
+  python3 python3-pip python3-venv git curl build-essential unzip nginx
 
 # -----------------------------
 # Create and activate virtual environment
@@ -20,7 +19,7 @@ source "$VENV_DIR/bin/activate"
 pip install --upgrade pip setuptools wheel
 
 # -----------------------------
-# Install Python libraries (KNOWN GOOD SET)
+# Install Python libraries
 # -----------------------------
 pip install torch==2.10.0
 pip install transformers==5.0.0
@@ -35,48 +34,51 @@ pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
 
 # -----------------------------
+# Install Hugging Face CLI officially
+# -----------------------------
+curl -LsSf https://hf.co/cli/install.sh | bash
+export PATH="$HOME/.local/bin:$PATH"  # ensure 'hf' is in PATH
+
+# -----------------------------
 # Navigate to FastAPI app
 # -----------------------------
 APP_DIR="/workspace/repo"
 cd "$APP_DIR"
-
 git pull || true
 
 # -----------------------------
-# Hugging Face login (NON-INTERACTIVE)
+# Hugging Face login (non-interactive)
 # -----------------------------
 if [[ -n "$HUGGING_FACE_TOKEN" ]]; then
-  echo "Logging into Hugging Face..."
-  huggingface-cli login --token "$HUGGING_FACE_TOKEN" --add-to-git-credential
+    echo "Logging into Hugging Face CLI..."
+    hf auth login --token "$HUGGING_FACE_TOKEN"
 else
-  echo "⚠️  HUGGING_FACE_TOKEN not set, assuming public model"
+    echo "⚠️  HUGGING_FACE_TOKEN not set, assuming public model"
 fi
 
 # -----------------------------
-# Download BASE MODEL LOCALLY (IMPORTANT)
+# Download BASE MODEL LOCALLY
 # -----------------------------
 MODEL_DIR="$APP_DIR/model"
 mkdir -p "$MODEL_DIR"
 
 echo "Downloading base model: $MODEL_NAME"
-huggingface-cli download "$MODEL_NAME" \
-  --local-dir "$MODEL_DIR" \
-  --local-dir-use-symlinks False
+hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
 
 echo "Base model downloaded to $MODEL_DIR"
 
 # -----------------------------
-# Download LoRA model (if applicable)
+# Download LoRA model if URL provided
 # -----------------------------
 if [[ -n "$MODEL_ZIP_URL" ]]; then
-  MODEL_ZIP="lora_model.zip"
-  echo "Downloading LoRA model from $MODEL_ZIP_URL..."
-  curl -L -o "$MODEL_ZIP" "$MODEL_ZIP_URL"
+    MODEL_ZIP="lora_model.zip"
+    echo "Downloading LoRA model from $MODEL_ZIP_URL..."
+    curl -L -o "$MODEL_ZIP" "$MODEL_ZIP_URL"
 
-  echo "Unzipping LoRA model..."
-  unzip -o "$MODEL_ZIP" -d .
-  rm "$MODEL_ZIP"
-  echo "LoRA model extracted."
+    echo "Unzipping LoRA model..."
+    unzip -o "$MODEL_ZIP" -d .
+    rm "$MODEL_ZIP"
+    echo "LoRA model extracted."
 fi
 
 # -----------------------------
@@ -92,15 +94,15 @@ EOL
 echo ".env file created"
 
 # -----------------------------
-# Start FastAPI (BLOCKING STARTUP SAFE)
+# Start FastAPI in background
 # -----------------------------
 export PYTHONUNBUFFERED=1
 export HF_HUB_DISABLE_TELEMETRY=1
 
 exec uvicorn main:app \
-  --host 0.0.0.0 \
-  --port 8000 \
-  > uvicorn.log 2>&1 &
+    --host 0.0.0.0 \
+    --port 8000 \
+    > uvicorn.log 2>&1 &
 
 UVICORN_PID=$!
 echo "FastAPI started with PID $UVICORN_PID on 0.0.0.0:8000"
