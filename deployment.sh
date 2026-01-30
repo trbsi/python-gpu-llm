@@ -22,13 +22,12 @@ pip install --upgrade pip setuptools wheel
 # -----------------------------
 # Install Python libraries (KNOWN GOOD SET)
 # -----------------------------
-pip install torch==2.1.0
-pip install transformers==4.48.0
-pip install accelerate==0.26.1
-pip install sentencepiece==0.2.1
+pip install torch==2.10.0
+pip install transformers==5.0.0
+pip install accelerate==1.12.0
 pip install peft==0.18.1
-pip install bitsandbytes==0.43.1
-pip install huggingface-hub==0.20.3
+pip install bitsandbytes==0.49.1
+pip install huggingface-hub==1.3.5
 
 pip install fastapi==0.128.0
 pip install uvicorn[standard]==0.40.0
