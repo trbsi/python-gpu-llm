@@ -35,14 +35,14 @@ class LlmReplyService:
                     model = Mistral3ForConditionalGeneration.from_pretrained(
                         base_model,
                         dtype=torch.float16,
-                        device='cuda',
+                        device_map='cuda',
                         quantization_config=bnb_config,
                     )
                 else:
                     model = AutoModelForCausalLM.from_pretrained(
                         base_model,
                         dtype=torch.float16,
-                        device='cuda',
+                        device_map='cuda',
                         quantization_config=bnb_config,
                     )
 
