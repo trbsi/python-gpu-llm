@@ -18,6 +18,7 @@ class LlmReplyService:
 
                 login(token=os.getenv("HUGGING_FACE_TOKEN"))
                 base_model = os.getenv("MODEL_NAME")
+                base_model_path = os.getenv("MODEL_PATH")
                 trained_model = './trained_model'
 
                 bnb_config = BitsAndBytesConfig(
@@ -33,14 +34,14 @@ class LlmReplyService:
                 print('Prepare base model')
                 if 'Ministral-3' in base_model:
                     model = Mistral3ForConditionalGeneration.from_pretrained(
-                        base_model,
+                        base_model_path,
                         dtype=torch.float16,
                         device_map='cuda',
                         quantization_config=bnb_config,
                     )
                 else:
                     model = AutoModelForCausalLM.from_pretrained(
-                        base_model,
+                        base_model_path,
                         dtype=torch.float16,
                         device_map='cuda',
                         quantization_config=bnb_config,
