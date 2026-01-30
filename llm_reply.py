@@ -1,5 +1,6 @@
 import os
 
+import bugsnag
 import torch
 from huggingface_hub import login
 from peft import PeftModel
@@ -10,47 +11,51 @@ class LlmReplyService:
     _tokenizer = None
     _model = None
 
-    def __init__(self):
-        if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
-            print('Loading model...')
+    def init(self):
+        try:
+            if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
+                print('Loading model...')
 
-            login(token=os.getenv("HUGGING_FACE_TOKEN"))
-            base_model = os.getenv("MODEL_NAME")
-            trained_model = './trained_model'
+                login(token=os.getenv("HUGGING_FACE_TOKEN"))
+                base_model = os.getenv("MODEL_NAME")
+                trained_model = './trained_model'
 
-            bnb_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type="nf4"
-            )
-
-            tokenizer = AutoTokenizer.from_pretrained(base_model)
-            if 'Ministral-3' in base_model:
-                model = Mistral3ForConditionalGeneration.from_pretrained(
-                    base_model,
-                    dtype=torch.float16,
-                    device='cuda',
-                    quantization_config=bnb_config,
-                )
-            else:
-                model = AutoModelForCausalLM.from_pretrained(
-                    base_model,
-                    dtype=torch.float16,
-                    device='cuda',
-                    quantization_config=bnb_config,
+                bnb_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.float16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type="nf4"
                 )
 
-            if tokenizer.pad_token is None:
-                tokenizer.pad_token = tokenizer.eos_token
+                tokenizer = AutoTokenizer.from_pretrained(base_model)
+                if 'Ministral-3' in base_model:
+                    model = Mistral3ForConditionalGeneration.from_pretrained(
+                        base_model,
+                        dtype=torch.float16,
+                        device='cuda',
+                        quantization_config=bnb_config,
+                    )
+                else:
+                    model = AutoModelForCausalLM.from_pretrained(
+                        base_model,
+                        dtype=torch.float16,
+                        device='cuda',
+                        quantization_config=bnb_config,
+                    )
 
-            model = PeftModel.from_pretrained(model, trained_model)
-            model.eval()
+                if tokenizer.pad_token is None:
+                    tokenizer.pad_token = tokenizer.eos_token
 
-            LlmReplyService._tokenizer = tokenizer
-            LlmReplyService._model = model
+                model = PeftModel.from_pretrained(model, trained_model)
+                model.eval()
 
-            print('Model loaded.')
+                LlmReplyService._tokenizer = tokenizer
+                LlmReplyService._model = model
+
+                print('Model loaded.')
+        except Exception as e:
+            bugsnag.notify(e)
+            print(e)
 
     def get_local_reply(self, chat_history: list) -> str:
         tokenizer = LlmReplyService._tokenizer

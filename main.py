@@ -11,22 +11,23 @@ load_dotenv()
 
 llm_service: None | LlmReplyService = None
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global llm_service
-    llm_service = LlmReplyService()  # loads model once per process
-    yield
-    print("Shutting down: cleanup if needed")
-
-
-app = FastAPI(lifespan=lifespan)
-
 bugsnag_api_key = os.getenv("BUGSNAG_API_KEY")
 bugsnag.configure(
     api_key=os.getenv("BUGSNAG_API_KEY"),
     project_root=os.path.dirname(os.path.abspath(__file__)),
 )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global llm_service
+    llm_service = LlmReplyService()
+    llm_service.init()
+    yield
+    print("Shutting down: cleanup if needed")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/health")
