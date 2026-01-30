@@ -27,7 +27,10 @@ class LlmReplyService:
                     bnb_4bit_quant_type="nf4"
                 )
 
+                print('Prepare tokenizer')
                 tokenizer = AutoTokenizer.from_pretrained(base_model)
+
+                print('Prepare base model')
                 if 'Ministral-3' in base_model:
                     model = Mistral3ForConditionalGeneration.from_pretrained(
                         base_model,
@@ -46,6 +49,7 @@ class LlmReplyService:
                 if tokenizer.pad_token is None:
                     tokenizer.pad_token = tokenizer.eos_token
 
+                print('Load peft')
                 model = PeftModel.from_pretrained(model, trained_model)
                 model.eval()
 
