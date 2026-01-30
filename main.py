@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import bugsnag
 from dotenv import load_dotenv
 from fastapi import FastAPI, Body
+
 from llm_reply import LlmReplyService
 
 load_dotenv()
@@ -34,7 +35,7 @@ def health():
 
 
 @app.get("/bugsnag")
-def health():
+def bugsnag():
     bugsnag.notify(Exception('Test exception from GPU'))
     return {"message": "bugsnag sent"}
 

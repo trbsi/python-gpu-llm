@@ -3,7 +3,7 @@ import os
 import torch
 from huggingface_hub import login
 from peft import PeftModel
-from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM
+from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, Mistral3ForConditionalGeneration
 
 
 class LlmReplyService:
@@ -15,8 +15,8 @@ class LlmReplyService:
             print('Loading model...')
 
             login(token=os.getenv("HUGGING_FACE_TOKEN"))
-            base_model = "mistralai/Ministral-8B-Instruct-2410"
-            trained_model = f'./trained_model'
+            base_model = os.getenv("MODEL_NAME")
+            trained_model = './trained_model'
 
             bnb_config = BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -26,11 +26,20 @@ class LlmReplyService:
             )
 
             tokenizer = AutoTokenizer.from_pretrained(base_model)
-            model = AutoModelForCausalLM.from_pretrained(
-                base_model,
-                quantization_config=bnb_config,
-                device_map='cuda'
-            )
+            if 'Ministral-3' in base_model:
+                model = Mistral3ForConditionalGeneration.from_pretrained(
+                    base_model,
+                    dtype=torch.float16,
+                    device='cuda',
+                    quantization_config=bnb_config,
+                )
+            else:
+                model = AutoModelForCausalLM.from_pretrained(
+                    base_model,
+                    dtype=torch.float16,
+                    device='cuda',
+                    quantization_config=bnb_config,
+                )
 
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token
