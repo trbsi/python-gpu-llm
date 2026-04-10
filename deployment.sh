@@ -1,12 +1,26 @@
 #!/bin/bash
 set -e  # exit on error
 
+INSTALL_UVICORN=false
+
+# -----------------------------
+# Parse arguments
+# -----------------------------
+for arg in "$@"; do
+  case $arg in
+    --with-uvicorn)
+      INSTALL_UVICORN=true
+      shift
+      ;;
+  esac
+done
+
 # -----------------------------
 # Update system and install essentials
 # -----------------------------
 sudo apt update
 sudo apt install -y \
-  python3 python3-pip python3-venv git curl build-essential unzip nginx
+  python3 python3-pip python3-venv git curl build-essential unzip nginx screen
 
 # -----------------------------
 # Create and activate virtual environment
@@ -15,7 +29,6 @@ VENV_DIR="/workspace/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
-# Upgrade pip + wheel
 pip install --upgrade pip setuptools wheel
 
 # -----------------------------
@@ -29,60 +42,56 @@ pip install bitsandbytes==0.49.1
 pip install huggingface-hub==1.3.5
 
 pip install fastapi==0.128.0
-pip install uvicorn[standard]==0.40.0
 pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
+pip install requests>=2.31.0
+
+if [ "$INSTALL_UVICORN" = true ]; then
+  pip install "uvicorn[standard]==0.40.0"
+fi
 
 # -----------------------------
-# Install Hugging Face CLI officially
+# Install Hugging Face CLI
 # -----------------------------
 curl -LsSf https://hf.co/cli/install.sh | bash
-export PATH="$HOME/.local/bin:$PATH"  # ensure 'hf' is in PATH
+export PATH="$HOME/.local/bin:$PATH"
 
 # -----------------------------
-# Navigate to FastAPI app
+# Navigate to app
 # -----------------------------
 APP_DIR="/workspace/repo"
 cd "$APP_DIR"
 git pull || true
 
 # -----------------------------
-# Hugging Face login (non-interactive)
+# Hugging Face login
 # -----------------------------
 if [[ -n "$HUGGING_FACE_TOKEN" ]]; then
-    echo "Logging into Hugging Face CLI..."
     hf auth login --token "$HUGGING_FACE_TOKEN"
 else
-    echo "⚠️  HUGGING_FACE_TOKEN not set, assuming public model"
+    echo "⚠️ No HF token provided"
 fi
 
 # -----------------------------
-# Download BASE MODEL LOCALLY
+# Download base model
 # -----------------------------
 MODEL_DIR="$APP_DIR/model"
 mkdir -p "$MODEL_DIR"
 
-echo "Downloading base model: $MODEL_NAME"
+echo "Downloading model: $MODEL_NAME"
 hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
 
-echo "Base model downloaded to $MODEL_DIR"
-
 # -----------------------------
-# Download LoRA model if URL provided
+# Download LoRA (optional)
 # -----------------------------
 if [[ -n "$MODEL_ZIP_URL" ]]; then
-    MODEL_ZIP="lora_model.zip"
-    echo "Downloading LoRA model from $MODEL_ZIP_URL..."
-    curl -L -o "$MODEL_ZIP" "$MODEL_ZIP_URL"
-
-    echo "Unzipping LoRA model..."
-    unzip -o "$MODEL_ZIP" -d .
-    rm "$MODEL_ZIP"
-    echo "LoRA model extracted."
+    curl -L -o lora_model.zip "$MODEL_ZIP_URL"
+    unzip -o lora_model.zip -d .
+    rm lora_model.zip
 fi
 
 # -----------------------------
-# Create .env file
+# Create .env
 # -----------------------------
 cat > .env <<EOL
 BUGSNAG_API_KEY=$BUGSNAG_API_KEY
@@ -91,29 +100,31 @@ MODEL_NAME=$MODEL_NAME
 MODEL_PATH=$MODEL_DIR
 EOL
 
-echo ".env file created"
-
 # -----------------------------
-# Start FastAPI in background
+# Start FastAPI (optional)
 # -----------------------------
 export PYTHONUNBUFFERED=1
 export HF_HUB_DISABLE_TELEMETRY=1
 
-exec uvicorn main:app \
-    --host 0.0.0.0 \
-    --port 8000 \
-    > uvicorn.log 2>&1 &
+if [ "$INSTALL_UVICORN" = true ]; then
+  echo "Starting FastAPI inside screen..."
 
-UVICORN_PID=$!
-echo "FastAPI started with PID $UVICORN_PID on 0.0.0.0:8000"
+  screen -dmS fastapi_app bash -c "
+    source $VENV_DIR/bin/activate &&
+    uvicorn main:app --host 0.0.0.0 --port 8000
+  "
+
+  echo "FastAPI running in screen session: fastapi_app"
+else
+  echo "Skipping FastAPI startup (uvicorn not installed)"
+fi
 
 # -----------------------------
-# Optional: self-register GPU with VPS
+# Optional GPU registration
 # -----------------------------
 sleep 5
 
 if [[ -n "$VPS_ENDPOINT" ]]; then
-  echo "Register GPU."
   curl -X POST "$VPS_ENDPOINT" \
        -H "Authorization: Bearer ${REGISTRATION_TOKEN:-super-secret-token}" \
        -H "Content-Type: application/json" \

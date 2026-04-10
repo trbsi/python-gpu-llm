@@ -1,10 +1,12 @@
 import os
-
-import bugsnag
 import torch
-from huggingface_hub import login
-from peft import PeftModel
-from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, Mistral3ForConditionalGeneration
+import bugsnag
+
+from transformers import (
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    AutoModelForCausalLM,
+)
 
 
 class LlmReplyService:
@@ -13,79 +15,91 @@ class LlmReplyService:
 
     def init(self):
         try:
-            if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
-                print('Loading model...')
+            if self._tokenizer is not None and self._model is not None:
+                return
 
-                login(token=os.getenv("HUGGING_FACE_TOKEN"))
-                base_model = os.getenv("MODEL_NAME")
-                base_model_path = os.getenv("MODEL_PATH")
-                trained_model = './trained_model'
+            print("Loading quantized model...")
 
-                bnb_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_compute_dtype=torch.float16,
-                    bnb_4bit_use_double_quant=True,
-                    bnb_4bit_quant_type="nf4"
-                )
+            model_name = os.getenv("MODEL_NAME")  # e.g. dphn/Dolphin-Mistral-24B-Venice-Edition
 
-                print('Prepare tokenizer')
-                tokenizer = AutoTokenizer.from_pretrained(base_model)
+            # -----------------------------
+            # 4-bit quantization config
+            # -----------------------------
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+            )
 
-                print('Prepare base model')
-                if 'Ministral-3' in base_model:
-                    model = Mistral3ForConditionalGeneration.from_pretrained(
-                        base_model_path,
-                        dtype=torch.float16,
-                        device_map='cuda',
-                        quantization_config=bnb_config,
-                    )
-                else:
-                    model = AutoModelForCausalLM.from_pretrained(
-                        base_model_path,
-                        dtype=torch.float16,
-                        device_map='cuda',
-                        quantization_config=bnb_config,
-                    )
+            print("Loading tokenizer...")
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name,
+                use_fast=True
+            )
 
-                if tokenizer.pad_token is None:
-                    tokenizer.pad_token = tokenizer.eos_token
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
 
-                print('Load peft')
-                model = PeftModel.from_pretrained(model, trained_model)
-                model.eval()
+            print("Loading base model (quantized)...")
 
-                LlmReplyService._tokenizer = tokenizer
-                LlmReplyService._model = model
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map="auto",          # IMPORTANT for large models (70B)
+                quantization_config=bnb_config,
+                torch_dtype=torch.float16,
+                trust_remote_code=True,
+            )
 
-                print('Model loaded.')
+            model.eval()
+
+            self._tokenizer = tokenizer
+            self._model = model
+
+            print("Quantized model loaded successfully.")
+
         except Exception as e:
             bugsnag.notify(e)
-            print(e)
+            print(f"Model loading failed: {e}")
 
+    """
+    chat_history = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hello!"},
+        {"role": "assistant", "content": "Hi! How can I help?"},
+        {"role": "user", "content": "Explain black holes simply."}
+    ]
+    """
     def get_local_reply(self, chat_history: list) -> str:
-        tokenizer = LlmReplyService._tokenizer
-        model = LlmReplyService._model
+        tokenizer = self._tokenizer
+        model = self._model
 
-        input_text = tokenizer.apply_chat_template(
+        if model is None or tokenizer is None:
+            raise RuntimeError("Model not initialized. Call init() first.")
+
+        prompt = tokenizer.apply_chat_template(
             chat_history,
             tokenize=False,
-            system_message="Assistant should respond in short, casual sentences.",
-            add_generation_prompt=True
+            add_generation_prompt=True,
+            #system_message=""
         )
 
-        input_tokens = tokenizer(input_text, return_tensors='pt').to(model.device)
+        inputs = tokenizer(prompt, return_tensors="pt")
 
-        output = model.generate(
-            **input_tokens,
-            max_new_tokens=75,
-            temperature=0.85,
-            do_sample=True,
-            pad_token_id=tokenizer.eos_token_id,
-            eos_token_id=tokenizer.eos_token_id
-        )
+        # move inputs to model device (important for device_map="auto")
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
-        input_token_length = input_tokens['input_ids'].shape[1]
-        generated_tokens = output[0][input_token_length:]
-        reply = tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        with torch.no_grad():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=75,
+                temperature=0.85,
+                do_sample=True,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
 
-        return reply
+        input_len = inputs["input_ids"].shape[1]
+        generated_tokens = output[0][input_len:]
+
+        return tokenizer.decode(generated_tokens, skip_special_tokens=True)
