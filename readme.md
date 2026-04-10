@@ -29,7 +29,7 @@ This script prepares a GPU server for running a FastAPI-based LLM service with H
 Set before running:
 
 ```bash
-export MODEL_NAME="meta-llama/Meta-Llama-3-70B-Instruct"
+export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
 export HUGGING_FACE_TOKEN="your_token_here"
 export BUGSNAG_API_KEY="your_key"
 export MODEL_ZIP_URL="optional_lora_url"
@@ -43,7 +43,7 @@ export VPS_ENDPOINT="optional_endpoint"
 ### 1. Make script executable
 
 ```bash
-chmod +x setup.sh
+chmod +x deployment.sh
 ```
 
 ---
@@ -51,7 +51,7 @@ chmod +x setup.sh
 ### 2. Run setup (without API server)
 
 ```bash
-./setup.sh
+./deployment.sh
 ```
 
 ---
@@ -59,7 +59,7 @@ chmod +x setup.sh
 ### 3. Run setup + start FastAPI
 
 ```bash
-./setup.sh --with-uvicorn
+./deployment.sh --with-uvicorn
 ```
 
 ---
@@ -88,27 +88,6 @@ screen -r fastapi_app
 
 ```
 CTRL + A, then D
-```
-
----
-
-## 🌐 Access API
-
-```
-http://SERVER_IP:8000
-```
-
----
-
-## 📁 Output Structure
-
-```
-/workspace/
- ├── venv/
- └── repo/
-      ├── model/
-      ├── .env
-      └── app files
 ```
 
 ---
@@ -160,5 +139,16 @@ echo $MODEL_NAME
 * Docker version
 * auto GPU detection
 * S3 model storage
+
+---
+
+## Run rewrite_title.py
+
+``` 
+export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
+export HUGGING_FACE_TOKEN="your_token_here"
+source /workspace/venv/bin/activate
+python rewrite_title.py
+```
 
 ---
