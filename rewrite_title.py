@@ -8,6 +8,7 @@ UPDATE_URL = "https://peachka.net/movies/api/update-title"
 
 SLEEP_SECONDS = 2  # delay between requests
 
+
 # Run as: python rewrite_title.py
 class TitleProcessor:
     def __init__(self):
@@ -23,9 +24,10 @@ class TitleProcessor:
             print(f"Fetch error: {e}")
             return None
 
-    def generate_title(self, original_title: str) -> str|None:
+    def generate_title(self, original_title: str) -> str | None:
         chat_history = [
-            {"role": "user", "content": f"Rewrite title column to be SEO friendly and to be different but have the same meaning. keep it dirty. respond only with new title: {original_title}"}
+            {"role": "user",
+             "content": f"Rewrite title column to be SEO friendly and to be different but have the same meaning. keep it dirty. respond only with new title: {original_title}"}
         ]
 
         try:
@@ -50,29 +52,33 @@ class TitleProcessor:
 
     def run(self):
         while True:
-            item = self.fetch_item()
+            try:
+                item = self.fetch_item()
 
-            if not item:
-                time.sleep(SLEEP_SECONDS)
-                continue
+                if not item:
+                    time.sleep(SLEEP_SECONDS)
+                    continue
 
-            video_id = item.get("video_id")
-            title = item.get("title")
+                video_id = item.get("video_id")
+                title = item.get("title")
 
-            if not video_id or not title:
-                print("Invalid response:", item)
-                time.sleep(SLEEP_SECONDS)
-                continue
+                if not video_id or not title:
+                    print("Invalid response:", item)
+                    time.sleep(SLEEP_SECONDS)
+                    continue
 
-            print(f"Processing: {video_id} -> {title}")
-            new_title = self.generate_title(title)
-            if not new_title:
-                print("No new title")
-                continue
+                print(f"Processing: {video_id} -> {title}")
+                new_title = self.generate_title(title)
+                if not new_title:
+                    print("No new title")
+                    continue
 
-            print(f"Generated: {new_title}")
-            print("")
-            self.update_item(video_id, new_title)
+                print(f"Generated: {new_title}")
+                print("")
+                self.update_item(video_id, new_title)
+            except Exception as e:
+                print(e)
+
 
 if __name__ == "__main__":
     processor = TitleProcessor()
