@@ -1,5 +1,6 @@
-import requests
 import time
+
+import requests
 
 from llm_reply import LlmReplyService
 
@@ -31,7 +32,7 @@ class TitleProcessor:
                 "role": "user",
                 "content": (
                     "Rewrite title column to be SEO friendly and different but keep same meaning. "
-                    f"Keep it engaging. Respond only with new title: {original_title}"
+                    f"Make it dirty. Use porn words. Respond only with new title: {original_title}"
                 )
             }
         ]
@@ -80,7 +81,7 @@ class TitleProcessor:
                         continue
 
                     print(f"Processing: {video_id} -> {title}")
- 
+
                     new_title = self.generate_title(title)
                     if not new_title:
                         print("No new title generated")
