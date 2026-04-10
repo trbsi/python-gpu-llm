@@ -1,6 +1,7 @@
 import os
 import torch
 import bugsnag
+from huggingface_hub import login
 
 from transformers import (
     AutoTokenizer,
@@ -19,7 +20,7 @@ class LlmReplyService:
                 return
 
             print("Loading quantized model...")
-
+            login(token=os.getenv("HUGGING_FACE_TOKEN"))
             model_name = os.getenv("MODEL_NAME")  # e.g. dphn/Dolphin-Mistral-24B-Venice-Edition
 
             # -----------------------------

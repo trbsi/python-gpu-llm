@@ -59,8 +59,6 @@ class TitleProcessor:
             video_id = item.get("video_id")
             title = item.get("title")
 
-            print(video_id, title)
-
             if not video_id or not title:
                 print("Invalid response:", item)
                 time.sleep(SLEEP_SECONDS)
@@ -73,6 +71,7 @@ class TitleProcessor:
                 continue
 
             print(f"Generated: {new_title}")
+            print("")
             self.update_item(video_id, new_title)
 
 if __name__ == "__main__":
