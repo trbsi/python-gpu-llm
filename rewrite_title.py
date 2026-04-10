@@ -80,7 +80,7 @@ class TitleProcessor:
                         continue
 
                     print(f"Processing: {video_id} -> {title}")
-
+ 
                     new_title = self.generate_title(title)
                     if not new_title:
                         print("No new title generated")
