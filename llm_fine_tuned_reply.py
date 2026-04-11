@@ -7,13 +7,14 @@ from peft import PeftModel
 from transformers import AutoTokenizer, BitsAndBytesConfig, AutoModelForCausalLM, Mistral3ForConditionalGeneration
 
 
-class LlmTrainedReplyService:
+# Uses trained fine-tuned model to generate reply
+class LlmFineTunedReplyService:
     _tokenizer = None
     _model = None
 
     def init(self):
         try:
-            if LlmReplyService._tokenizer is None or LlmReplyService._model is None:
+            if LlmFineTunedReplyService._tokenizer is None or LlmFineTunedReplyService._model is None:
                 print('Loading model...')
 
                 login(token=os.getenv("HUGGING_FACE_TOKEN"))
@@ -63,8 +64,8 @@ class LlmTrainedReplyService:
             print(e)
 
     def get_local_reply(self, chat_history: list) -> str:
-        tokenizer = LlmReplyService._tokenizer
-        model = LlmReplyService._model
+        tokenizer = LlmFineTunedReplyService._tokenizer
+        model = LlmFineTunedReplyService._model
 
         input_text = tokenizer.apply_chat_template(
             chat_history,

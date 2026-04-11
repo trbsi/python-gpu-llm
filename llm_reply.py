@@ -10,6 +10,7 @@ from transformers import (
 )
 
 
+# Uses base model to generate replies
 class LlmReplyService:
     _tokenizer = None
     _model = None
@@ -46,7 +47,7 @@ class LlmReplyService:
 
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
-                device_map="auto",          # IMPORTANT for large models (70B)
+                device_map="auto",  # IMPORTANT for large models (70B)
                 quantization_config=bnb_config,
                 torch_dtype=torch.float16,
                 trust_remote_code=True,
@@ -71,6 +72,7 @@ class LlmReplyService:
         {"role": "user", "content": "Explain black holes simply."}
     ]
     """
+
     def get_local_reply(self, chat_history: list) -> str:
         tokenizer = self._tokenizer
         model = self._model
@@ -82,7 +84,7 @@ class LlmReplyService:
             chat_history,
             tokenize=False,
             add_generation_prompt=True,
-            #system_message=""
+            # system_message=""
         )
 
         inputs = tokenizer(prompt, return_tensors="pt")

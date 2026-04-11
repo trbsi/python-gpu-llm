@@ -1,6 +1,7 @@
 import time
 
 import requests
+from dotenv import load_dotenv
 
 from llm_reply import LlmReplyService
 
@@ -8,6 +9,8 @@ GET_URL = "https://peachka.net/movies/api/get-title"
 UPDATE_URL = "https://peachka.net/movies/api/update-title"
 
 SLEEP_SECONDS = 2  # delay between requests
+
+load_dotenv()
 
 
 # Run as: python rewrite_title.py
