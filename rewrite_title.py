@@ -1,4 +1,6 @@
+import argparse
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from dotenv import load_dotenv
@@ -13,15 +15,18 @@ SLEEP_SECONDS = 2  # delay between requests
 load_dotenv()
 
 
-# Run as: python rewrite_title.py
+# Run as: python rewrite_title.py --limit 20 --workers 8
 class TitleProcessor:
-    def __init__(self):
+    def __init__(self, limit=10, workers=5):
+        self.limit = limit
+        self.workers = workers
+
         self.llm = LlmReplyService()
         self.llm.init()
 
-    def fetch_items(self, limit: int = 10):
+    def fetch_items(self):
         try:
-            response = requests.get(GET_URL, params={"limit": limit}, timeout=10)
+            response = requests.get(GET_URL, params={"limit": self.limit}, timeout=10)
             response.raise_for_status()
             data = response.json()
             return data.get("items", [])
@@ -64,10 +69,30 @@ class TitleProcessor:
         except Exception as e:
             print(f"Update error: {e}")
 
+    def process_item(self, item):
+        video_id = item.get("video_id")
+        title = item.get("title")
+
+        if not video_id or not title:
+            return None
+
+        print(f"Processing: {video_id} -> {title}")
+
+        new_title = self.generate_title(title)
+        if not new_title:
+            return None
+
+        print(f"Generated: {new_title}\n")
+
+        return {
+            "video_id": video_id,
+            "title": new_title
+        }
+
     def run(self):
         while True:
             try:
-                items = self.fetch_items(limit=10)
+                items = self.fetch_items()
 
                 if not items:
                     time.sleep(SLEEP_SECONDS)
@@ -75,27 +100,13 @@ class TitleProcessor:
 
                 processed_batch = []
 
-                for item in items:
-                    video_id = item.get("video_id")
-                    title = item.get("title")
+                with ThreadPoolExecutor(max_workers=self.workers) as executor:
+                    futures = [executor.submit(self.process_item, item) for item in items]
 
-                    if not video_id or not title:
-                        print("Invalid item:", item)
-                        continue
-
-                    print(f"Processing: {video_id} -> {title}")
-
-                    new_title = self.generate_title(title)
-                    if not new_title:
-                        print("No new title generated")
-                        continue
-
-                    print(f"Generated: {new_title}\n")
-
-                    processed_batch.append({
-                        "video_id": video_id,
-                        "title": new_title
-                    })
+                    for future in as_completed(futures):
+                        result = future.result()
+                        if result:
+                            processed_batch.append(result)
 
                 if processed_batch:
                     self.update_items(processed_batch)
@@ -106,5 +117,11 @@ class TitleProcessor:
 
 
 if __name__ == "__main__":
-    processor = TitleProcessor()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--workers", type=int, default=5)
+
+    args = parser.parse_args()
+
+    processor = TitleProcessor(limit=args.limit, workers=args.workers)
     processor.run()
