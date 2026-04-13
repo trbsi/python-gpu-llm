@@ -87,7 +87,8 @@ class TitleProcessor:
             'Use porn words, be extra dirty, nasty, raw and creative.' 
             f'Give me a description of a porn clip for following title, reply only with description: "{new_title}"'
         )
-        new_description = self.generate_title(description_content)
+        # new_description = self.generate_title(description_content)
+        new_description = None
 
         print(f"Generated title: {new_title}")
         print(f"Generated description: {new_description}")
@@ -95,7 +96,7 @@ class TitleProcessor:
         return {
             "video_id": video_id,
             "title": new_title,
-            "description": new_description,
+            # "description": new_description,
         }
 
     def run(self):
