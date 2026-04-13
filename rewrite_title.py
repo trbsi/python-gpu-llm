@@ -1,4 +1,5 @@
 import argparse
+import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -17,6 +18,9 @@ load_dotenv()
 
 # Run as: python rewrite_title.py --limit 20 --workers 8
 class TitleProcessor:
+    ONLY_TITLE = True
+    ONLY_DESCRIPTION = False
+
     def __init__(self, limit=10, workers=5):
         self.limit = limit
         self.workers = workers
@@ -34,7 +38,7 @@ class TitleProcessor:
             print(f"Fetch error: {e}")
             return []
 
-    def generate_title(self, content:str) -> str | None:
+    def generate_title(self, content: str) -> str | None:
         chat_history = [
             {
                 "role": "user",
@@ -74,21 +78,36 @@ class TitleProcessor:
             return None
 
         print(f"Processing: {video_id} -> {title}")
-
-        title_content = (
-            "Rewrite title column to be SEO friendly and different but keep same meaning. "
-            f'Make it dirty. Use porn words. Respond only with new title: "{title}"'
-        )
-        new_title = self.generate_title(title_content)
-        if not new_title:
-            return None
-
-        description_content = (
-            'Use porn words, be extra dirty, nasty, raw and creative.' 
-            f'Give me a description of a porn clip for following title, reply only with description: "{new_title}"'
-        )
-        # new_description = self.generate_title(description_content)
+        new_title = None
         new_description = None
+
+        if self.ONLY_TITLE:
+            title_content = (
+                "Rewrite title column to be SEO friendly and different but keep same meaning. "
+                f'Make it dirty. Use porn words. Respond only with new title: "{title}"'
+            )
+            new_title = self.generate_title(title_content)
+            if not new_title:
+                return None
+        elif self.ONLY_DESCRIPTION:
+            description_content = (
+                'Use porn words, be extra dirty, nasty, raw and creative.'
+                f'Give me a description of a porn clip for following title, reply only with description: "{title}"'
+            )
+            new_description = self.generate_title(description_content)
+        else:
+            content = (
+                'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.'
+                'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
+                'Respond in JSON format: { "title": "", "description": "" }'
+                f'Original title: "{title}"'
+                )
+            response = self.generate_title(content)
+            response = json.loads(response)
+            new_title = response.get("title")
+            new_description = response.get("description")
+
+
 
         print(f"Generated title: {new_title}")
         print(f"Generated description: {new_description}")
@@ -96,7 +115,7 @@ class TitleProcessor:
         return {
             "video_id": video_id,
             "title": new_title,
-            # "description": new_description,
+            "description": new_description,
         }
 
     def run(self):
