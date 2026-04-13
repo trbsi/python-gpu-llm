@@ -89,8 +89,8 @@ class TitleProcessor:
         )
         new_description = self.generate_title(description_content)
 
-        print(f"Generated title: {new_title}\n")
-        print(f"Generated description: {new_description}\n")
+        print(f"Generated title: {new_title}")
+        print(f"Generated description: {new_description}")
 
         return {
             "video_id": video_id,
