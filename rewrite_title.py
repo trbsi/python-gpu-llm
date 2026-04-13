@@ -85,7 +85,7 @@ class TitleProcessor:
 
         description_content = (
             'Use porn words, be extra dirty, nasty, raw and creative.' 
-            f'Give me a SEO description for following title, reply only with description: "{new_title}"'
+            f'Give me a description of a porn clip for following title, reply only with description: "{new_title}"'
         )
         new_description = self.generate_title(description_content)
 
