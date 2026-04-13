@@ -34,14 +34,11 @@ class TitleProcessor:
             print(f"Fetch error: {e}")
             return []
 
-    def generate_title(self, original_title: str) -> str | None:
+    def generate_title(self, content:str) -> str | None:
         chat_history = [
             {
                 "role": "user",
-                "content": (
-                    "Rewrite title column to be SEO friendly and different but keep same meaning. "
-                    f"Make it dirty. Use porn words. Respond only with new title: {original_title}"
-                )
+                "content": content
             }
         ]
 
@@ -56,7 +53,7 @@ class TitleProcessor:
         """
         items format:
         [
-            {"video_id": 1, "title": "new title"},
+            {"video_id": 1, "title": "new title", "description": "new description"},
             ...
         ]
         """
@@ -78,15 +75,27 @@ class TitleProcessor:
 
         print(f"Processing: {video_id} -> {title}")
 
-        new_title = self.generate_title(title)
+        title_content = (
+            "Rewrite title column to be SEO friendly and different but keep same meaning. "
+            f'Make it dirty. Use porn words. Respond only with new title: "{title}"'
+        )
+        new_title = self.generate_title(title_content)
         if not new_title:
             return None
 
-        print(f"Generated: {new_title}\n")
+        description_content = (
+            'Use porn words, be extra dirty, nasty, raw and creative.' 
+            f'Give me a SEO description for following title, reply only with description: "{new_title}"'
+        )
+        new_description = self.generate_title(description_content)
+
+        print(f"Generated title: {new_title}\n")
+        print(f"Generated description: {new_description}\n")
 
         return {
             "video_id": video_id,
-            "title": new_title
+            "title": new_title,
+            "description": new_description,
         }
 
     def run(self):
