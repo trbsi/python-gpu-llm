@@ -101,13 +101,12 @@ class TitleProcessor:
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
                 'Respond in JSON format: { "title": "", "description": "" }'
                 f'Original title: "{title}"'
-                )
+            )
             response = self.generate_title(content)
+            response = response.strip('```json').strip('```')
             response = json.loads(response)
             new_title = response.get("title")
             new_description = response.get("description")
-
-
 
         print(f"Generated title: {new_title}")
         print(f"Generated description: {new_description}")

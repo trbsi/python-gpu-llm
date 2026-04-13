@@ -95,7 +95,7 @@ class LlmReplyService:
         with torch.no_grad():
             output = model.generate(
                 **inputs,
-                max_new_tokens=75,
+                max_new_tokens=500,
                 temperature=0.85,
                 do_sample=True,
                 pad_token_id=tokenizer.eos_token_id,
