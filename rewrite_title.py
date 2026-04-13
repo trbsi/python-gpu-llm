@@ -1,5 +1,6 @@
 import argparse
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -20,6 +21,7 @@ load_dotenv()
 class TitleProcessor:
     ONLY_TITLE = True
     ONLY_DESCRIPTION = False
+    BATCH_TITLES=False
 
     def __init__(self, limit=10, workers=5):
         self.limit = limit
@@ -99,12 +101,11 @@ class TitleProcessor:
             content = (
                 'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.'
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
-                'Respond in JSON format: { "title": "", "description": "" }'
+                'Respond in valid JSON format: { "title": "", "description": "" }'
                 f'Original title: "{title}"'
             )
             response = self.generate_title(content)
-            response = response.strip('```json').strip('```')
-            response = json.loads(response)
+            response = self.extract_json(response)
             new_title = response.get("title")
             new_description = response.get("description")
 
@@ -117,6 +118,36 @@ class TitleProcessor:
             "description": new_description,
         }
 
+    def extract_json(self, text: str):
+        import json
+        import re
+
+        try:
+            # Remove code fences if present
+            text = text.strip()
+            text = text.replace("```json", "").replace("```", "").strip()
+
+            # Try extracting array first (batch mode)
+            match = re.search(r'\[.*\]', text, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+
+            # Fallback: try object mode
+            match = re.search(r'\{.*\}', text, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+
+        except json.JSONDecodeError as e:
+            print("JSON parse error:", e)
+
+        return None
+
+    def build_titles_text(self, items):
+        return "\n".join(
+            f"{i + 1}. {item['title']}"
+            for i, item in enumerate(items)
+        )
+
     def run(self):
         while True:
             try:
@@ -126,15 +157,61 @@ class TitleProcessor:
                     time.sleep(SLEEP_SECONDS)
                     continue
 
+                # =========================
+                # 🔥 BATCH MODE (NEW)
+                # =========================
+                if self.BATCH_TITLES:
+                    titles_text = self.build_titles_text(items)
+
+                    prompt = (
+                        "Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.\n"
+                        "Then generate description, use porn words, be extra dirty, nasty, raw and creative.\n"
+                        "Return ONLY valid JSON array:\n"
+                        '[{"video_id": 1, "title": "...", "description": "..."}]\n\n'
+                        f"Titles:\n{titles_text}"
+                    )
+
+                    response = self.generate_title(prompt)
+                    response = self.extract_json(response)
+                    print(response)
+
+                    if not response:
+                        print("Batch JSON parse failed")
+                        continue
+
+                    # If model does NOT return video_id, map manually
+                    processed_batch = []
+
+                    for i, item in enumerate(items):
+                        if i < len(response):
+                            r = response[i]
+                            processed_batch.append({
+                                "video_id": item["video_id"],
+                                "title": r.get("title"),
+                                "description": r.get("description"),
+                            })
+
+                    if processed_batch:
+                        self.update_items(processed_batch)
+
+                    time.sleep(SLEEP_SECONDS)
+                    continue
+
+                # =========================
+                # 🔥 PARALLEL MODE (OLD)
+                # =========================
                 processed_batch = []
 
                 with ThreadPoolExecutor(max_workers=self.workers) as executor:
                     futures = [executor.submit(self.process_item, item) for item in items]
 
                     for future in as_completed(futures):
-                        result = future.result()
-                        if result:
-                            processed_batch.append(result)
+                        try:
+                            result = future.result()
+                            if result:
+                                processed_batch.append(result)
+                        except Exception as e:
+                            print(f"Worker error: {e}")
 
                 if processed_batch:
                     self.update_items(processed_batch)
@@ -142,7 +219,6 @@ class TitleProcessor:
             except Exception as e:
                 print(f"Loop error: {e}")
                 time.sleep(SLEEP_SECONDS)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
