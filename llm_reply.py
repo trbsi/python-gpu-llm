@@ -51,7 +51,6 @@ class LlmReplyService:
                 quantization_config=bnb_config,
                 torch_dtype=torch.float16,
                 trust_remote_code=True,
-                attn_implementation="flash_attention_2",
             )
 
             model.eval()
