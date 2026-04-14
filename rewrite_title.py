@@ -21,7 +21,8 @@ load_dotenv()
 class TitleProcessor:
     ONLY_TITLE = True
     ONLY_DESCRIPTION = False
-    BATCH_TITLES=False
+    BATCH_TITLES = False
+    DEFAULT_TOKENS = 150
 
     def __init__(self, limit=10, workers=5):
         self.limit = limit
@@ -49,7 +50,8 @@ class TitleProcessor:
         ]
 
         try:
-            reply = self.llm.get_local_reply(chat_history)
+            max_tokens = self.DEFAULT_TOKENS * 10 if self.BATCH_TITLES else self.DEFAULT_TOKENS
+            reply = self.llm.get_local_reply(chat_history, max_tokens)
             return reply.strip()
         except Exception as e:
             print(f"LLM error: {e}")
@@ -120,31 +122,29 @@ class TitleProcessor:
 
     def extract_json(self, text: str):
         import json
-        import re
 
+        text = text.strip().replace("```json", "").replace("```", "").strip()
+
+        # Try direct parse first (fast path)
         try:
-            # Remove code fences if present
-            text = text.strip()
-            text = text.replace("```json", "").replace("```", "").strip()
+            return json.loads(text)
+        except:
+            pass
 
-            # Try extracting array first (batch mode)
-            match = re.search(r'\[.*\]', text, re.DOTALL)
+        # Fallback: extract first JSON-like structure
+        for pattern in [r'\[.*\]', r'\{.*\}']:
+            match = re.search(pattern, text, re.DOTALL)
             if match:
-                return json.loads(match.group(0))
-
-            # Fallback: try object mode
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                return json.loads(match.group(0))
-
-        except json.JSONDecodeError as e:
-            print("JSON parse error:", e)
+                try:
+                    return json.loads(match.group(0))
+                except:
+                    continue
 
         return None
 
     def build_titles_text(self, items):
         return "\n".join(
-            f"{i + 1}. {item['title']}"
+            f"{item['video_id']}. {item['title']}"
             for i, item in enumerate(items)
         )
 
@@ -166,8 +166,8 @@ class TitleProcessor:
                     prompt = (
                         "Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.\n"
                         "Then generate description, use porn words, be extra dirty, nasty, raw and creative.\n"
-                        "Return ONLY valid JSON array:\n"
-                        '[{"video_id": 1, "title": "...", "description": "..."}]\n\n'
+                        'Return ONLY valid JSON array:[{"video_id": ..., "title": "...", "description": "..."}]'
+                        "\n"
                         f"Titles:\n{titles_text}"
                     )
 
@@ -219,6 +219,7 @@ class TitleProcessor:
             except Exception as e:
                 print(f"Loop error: {e}")
                 time.sleep(SLEEP_SECONDS)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

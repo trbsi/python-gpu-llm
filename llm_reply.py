@@ -73,7 +73,7 @@ class LlmReplyService:
     ]
     """
 
-    def get_local_reply(self, chat_history: list) -> str:
+    def get_local_reply(self, chat_history: list, max_tokens: int = 120) -> str:
         tokenizer = self._tokenizer
         model = self._model
 
@@ -95,7 +95,7 @@ class LlmReplyService:
         with torch.no_grad():
             output = model.generate(
                 **inputs,
-                max_new_tokens=150,
+                max_new_tokens=max_tokens,
                 temperature=0.7,
                 do_sample=True,
                 pad_token_id=tokenizer.eos_token_id,
