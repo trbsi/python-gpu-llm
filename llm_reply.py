@@ -128,7 +128,7 @@ class LlmReplyService:
             truncation=True
         )
 
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+        inputs = inputs.to(model.device)
 
         with torch.no_grad():
             outputs = model.generate(

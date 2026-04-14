@@ -113,6 +113,7 @@ class TitleProcessor:
 
         print(f"Generated title: {new_title}")
         print(f"Generated description: {new_description}")
+        print("")
 
         return {
             "video_id": video_id,

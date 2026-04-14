@@ -29,6 +29,13 @@ VENV_DIR="/workspace/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
+# needed for vLLM (CXXABI_1.3.15 is needed)
+apt update
+apt install -y software-properties-common
+add-apt-repository ppa:ubuntu-toolchain-r/test -y
+apt update
+apt install -y libstdc++6
+
 pip install --upgrade pip setuptools wheel
 
 # -----------------------------
@@ -46,6 +53,7 @@ pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
 pip install requests>=2.31.0
 pip install flash-attn==0.2.4
+pip install vllm>=0.19.0
 
 if [ "$INSTALL_UVICORN" = true ]; then
   pip install "uvicorn[standard]==0.40.0"
