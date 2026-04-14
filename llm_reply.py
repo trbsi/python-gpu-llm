@@ -47,10 +47,11 @@ class LlmReplyService:
 
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
-                device_map="auto",  # IMPORTANT for large models (70B)
+                device_map="cuda",
                 quantization_config=bnb_config,
                 torch_dtype=torch.float16,
                 trust_remote_code=True,
+                attn_implementation="flash_attention_2",
             )
 
             model.eval()
@@ -90,7 +91,7 @@ class LlmReplyService:
         inputs = tokenizer(prompt, return_tensors="pt")
 
         # move inputs to model device (important for device_map="auto")
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+        inputs = inputs.to(model.device)
 
         with torch.no_grad():
             output = model.generate(
@@ -106,3 +107,44 @@ class LlmReplyService:
         generated_tokens = output[0][input_len:]
 
         return tokenizer.decode(generated_tokens, skip_special_tokens=True)
+
+    def get_local_reply_batch(self, chat_histories: list, max_tokens: int = 300):
+        tokenizer = self._tokenizer
+        model = self._model
+
+        prompts = [
+            tokenizer.apply_chat_template(
+                chat,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            for chat in chat_histories
+        ]
+
+        inputs = tokenizer(
+            prompts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
+        )
+
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=max_tokens,
+                temperature=0.7,
+                do_sample=True,
+                pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
+
+        results = []
+        for i in range(len(outputs)):
+            input_len = inputs["input_ids"].shape[1]
+            generated_tokens = outputs[i][input_len:]
+            text = tokenizer.decode(generated_tokens, skip_special_tokens=True)
+            results.append(text)
+
+        return results
