@@ -111,8 +111,8 @@ class TitleProcessor:
             new_title = response.get("title")
             new_description = response.get("description")
 
-        print(f"Generated title: {new_title}")
-        print(f"Generated description: {new_description}")
+        print(f"{video_id} Generated title: {new_title}")
+        print(f"{video_id} Generated description: {new_description}")
         print("")
 
         return {
