@@ -1,5 +1,4 @@
 import argparse
-import json
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -87,7 +86,7 @@ class TitleProcessor:
 
         if self.ONLY_TITLE:
             title_content = (
-                "Rewrite title column to be SEO friendly and different but keep same meaning. "
+                "Rewrite title column to be SEO friendly and different but keep same meaning. Make description human like. Like how human would write the title for the porn clip."
                 f'Make it dirty. Use porn words. Respond only with new title: "{title}"'
             )
             new_title = self.generate_title(title_content)
@@ -95,14 +94,15 @@ class TitleProcessor:
                 return None
         elif self.ONLY_DESCRIPTION:
             description_content = (
-                'Use porn words, be extra dirty, nasty, raw and creative.'
-                f'Give me a description of a porn clip for following title, reply only with description: "{title}"'
+                'Use porn words, be extra dirty, nasty, raw and creative. Make description human like. Like how human would describe the porn clip.'
+                f'Give me a description of a porn clip for the title, reply only with description, up to 150 words, make sure to end sentence with a dot. Title is: "{title}"'
             )
             new_description = self.generate_title(description_content)
         else:
             content = (
                 'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.'
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
+                'Make description and title human like. Like how human would write the description and title for the porn clip.'
                 'Respond in valid JSON format: { "title": "", "description": "" }'
                 f'Original title: "{title}"'
             )
