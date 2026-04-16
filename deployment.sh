@@ -52,7 +52,6 @@ pip install fastapi==0.128.0
 pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
 pip install requests>=2.31.0
-pip install flash-attn==0.2.4 --no-build-isolation
 pip install vllm>=0.19.0
 
 if [ "$INSTALL_UVICORN" = true ]; then
