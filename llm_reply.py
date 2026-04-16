@@ -1,12 +1,13 @@
 import os
-import torch
-import bugsnag
-from huggingface_hub import login
 
+import bugsnag
+import torch
+from huggingface_hub import login
 from transformers import (
     AutoTokenizer,
     BitsAndBytesConfig,
     AutoModelForCausalLM,
+    Mistral3ForConditionalGeneration
 )
 
 
@@ -45,13 +46,22 @@ class LlmReplyService:
 
             print("Loading base model (quantized)...")
 
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                device_map="cuda",
-                quantization_config=bnb_config,
-                torch_dtype=torch.float16,
-                trust_remote_code=True,
-            )
+            if 'mistral' in model_name.lower():
+                model = Mistral3ForConditionalGeneration.from_pretrained(
+                    model_name,
+                    device_map="cuda",
+                    quantization_config=bnb_config,
+                    torch_dtype=torch.float16,
+                    fix_mistral_regex=True
+                )
+            else:
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_name,
+                    device_map="cuda",
+                    quantization_config=bnb_config,
+                    torch_dtype=torch.float16,
+                    trust_remote_code=True,
+                )
 
             model.eval()
 
