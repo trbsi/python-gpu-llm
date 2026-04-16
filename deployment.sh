@@ -29,12 +29,12 @@ VENV_DIR="/workspace/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
-# needed for vLLM (CXXABI_1.3.15 is needed)
-apt update
-apt install -y software-properties-common
-add-apt-repository ppa:ubuntu-toolchain-r/test -y
-apt update
-apt install -y libstdc++6
+# needed for vLLM (CXXABI_1.3.15 is needed). but not used right now
+#apt update
+#apt install -y software-properties-common
+#add-apt-repository ppa:ubuntu-toolchain-r/test -y
+#apt update
+#apt install -y libstdc++6
 
 pip install --upgrade pip setuptools wheel
 
