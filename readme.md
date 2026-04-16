@@ -147,7 +147,7 @@ echo $MODEL_NAME
 ```
 screen -S rewrite
 export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
-export HUGGING_FACE_TOKEN="your_token_here"
+    export HUGGING_FACE_TOKEN="your_token_here"
 source /workspace/venv/bin/activate
 cd python-gpu-llm
 python rewrite_title.py

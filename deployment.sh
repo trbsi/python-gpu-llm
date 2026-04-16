@@ -42,7 +42,7 @@ pip install --upgrade pip setuptools wheel
 # Install Python libraries
 # -----------------------------
 pip install torch==2.10.0
-pip install transformers==5.0.0
+pip install transformers==5.5.4
 pip install accelerate==1.12.0
 pip install peft==0.18.1
 pip install bitsandbytes==0.49.1
@@ -52,7 +52,7 @@ pip install fastapi==0.128.0
 pip install bugsnag==4.8.1
 pip install python-dotenv==1.2.1
 pip install requests>=2.31.0
-pip install vllm>=0.19.0
+#pip install vllm>=0.19.0
 
 if [ "$INSTALL_UVICORN" = true ]; then
   pip install "uvicorn[standard]==0.40.0"
