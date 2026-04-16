@@ -41,12 +41,12 @@ pip install --upgrade pip setuptools wheel
 # -----------------------------
 # Install Python libraries
 # -----------------------------
-pip install torch==2.10.0
+pip install torch==2.11.0
 pip install transformers==5.5.4
-pip install accelerate==1.12.0
-pip install peft==0.18.1
-pip install bitsandbytes==0.49.1
-pip install huggingface-hub==1.3.5
+pip install accelerate==1.13.0
+pip install peft==0.19.1
+pip install bitsandbytes==0.49.2
+pip install huggingface-hub==1.11.0
 
 pip install fastapi==0.128.0
 pip install bugsnag==4.8.1
