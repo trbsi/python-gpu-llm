@@ -18,17 +18,28 @@ load_dotenv()
 
 # Run as: python rewrite_title.py --limit 20 --workers 8
 class TitleProcessor:
-    ONLY_TITLE = True
-    ONLY_DESCRIPTION = False
-    BATCH_TITLES = False
     DEFAULT_TOKENS = 150
 
-    def __init__(self, limit=10, workers=5):
+    def __init__(self, limit: int, workers: int, type: str, lang: str):
         self.limit = limit
         self.workers = workers
+        self.type = type
+        self.lang = lang
 
         self.llm = LlmReplyService()
         self.llm.init()
+
+    def is_batch_titles(self):
+        return self.type == 'batch_titles'
+
+    def is_only_title(self):
+        return self.type == 'only_title'
+
+    def is_only_description(self):
+        return self.type == 'only_description'
+
+    def is_title_and_description(self):
+        return self.type == 'title_and_description'
 
     def fetch_items(self):
         try:
@@ -40,7 +51,7 @@ class TitleProcessor:
             print(f"Fetch error: {e}")
             return []
 
-    def generate_title(self, content: str) -> str | None:
+    def generate_reply(self, content: str) -> str | None:
         chat_history = [
             {
                 "role": "user",
@@ -49,7 +60,7 @@ class TitleProcessor:
         ]
 
         try:
-            max_tokens = self.DEFAULT_TOKENS * 10 if self.BATCH_TITLES else self.DEFAULT_TOKENS
+            max_tokens = self.DEFAULT_TOKENS * 10 if self.is_batch_titles() else self.DEFAULT_TOKENS
             reply = self.llm.get_local_reply(chat_history, max_tokens)
             return reply.strip()
         except Exception as e:
@@ -84,29 +95,41 @@ class TitleProcessor:
         new_title = None
         new_description = None
 
-        if self.ONLY_TITLE:
+        if self.is_only_title():
             title_content = (
                 "Rewrite title column to be SEO friendly and different but keep same meaning. Make description human like. Like how human would write the title for the porn clip."
                 f'Make it dirty. Use porn words. Do it all in English language. Respond only with new title: "{title}"'
             )
-            new_title = self.generate_title(title_content)
+            new_title = self.generate_reply(title_content)
             if not new_title:
                 return None
-        elif self.ONLY_DESCRIPTION:
+        elif self.is_only_description():
             description_content = (
                 'Use porn words, be extra dirty, nasty, raw and creative. Make description human like. Like how human would describe the porn clip.'
                 f'Give me a description of a porn clip for the title, reply only with description, up to 150 words, make sure to end sentence with a dot. Do it all in English language. Title is: "{title}"'
             )
-            new_description = self.generate_title(description_content)
-        else:
-            content = (
+            new_description = self.generate_reply(description_content)
+        elif self.is_title_and_description():
+            content = ''
+            if self.lang == 'en':
+                content += 'Use English language.'
+            elif self.lang == 'hr' or self.lang == 'sr':
+                content += 'Use Serbian language.'
+            elif self.lang == 'es':
+                content += 'Use Spanish language.'
+            elif self.lang == 'pt':
+                content += 'Use Portuguese language.'
+            elif self.lang == 'de':
+                content += 'Use German language.'
+
+            content += (
                 'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.'
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
-                'Make description and title human like. Like how human would write the description and title for the porn clip. Do it all in English language.'
+                'Make description and title human like. Like how human would write the description and title for the porn clip.'
                 'Respond in valid JSON format: { "title": "", "description": "" }'
                 f'Original title: "{title}"'
             )
-            response = self.generate_title(content)
+            response = self.generate_reply(content)
             response = self.extract_json(response)
             new_title = response.get("title")
             new_description = response.get("description")
@@ -116,6 +139,7 @@ class TitleProcessor:
         print("")
 
         return {
+            "lang": self.lang,
             "video_id": video_id,
             "title": new_title,
             "description": new_description,
@@ -172,7 +196,7 @@ class TitleProcessor:
                         f"Titles:\n{titles_text}"
                     )
 
-                    response = self.generate_title(prompt)
+                    response = self.generate_reply(prompt)
                     response = self.extract_json(response)
                     print(response)
 
@@ -222,12 +246,20 @@ class TitleProcessor:
                 time.sleep(SLEEP_SECONDS)
 
 
+# Usage: python3 rewrite_title --type=title_and_description --lang=en
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--workers", type=int, default=5)
+    parser.add_argument("--type", type=str, default='only_title')
+    parser.add_argument("--lang", type=str, default='en')
 
     args = parser.parse_args()
 
-    processor = TitleProcessor(limit=args.limit, workers=args.workers)
+    processor = TitleProcessor(
+        limit=args.limit,
+        workers=args.workers,
+        type=args.type,
+        lang=args.lang,
+    )
     processor.run()
