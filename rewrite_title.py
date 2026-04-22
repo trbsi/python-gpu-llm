@@ -97,7 +97,7 @@ class TitleProcessor:
 
         if self.is_only_title():
             title_content = (
-                "Rewrite title column to be SEO friendly and different but keep same meaning. Make description human like. Like how human would write the title for the porn clip."
+                "Rewrite title column to be SEO friendly and different but keep same meaning. Make description human like. Like how human would write the title for the porn clip. Title can be max 50 characters."
                 f'Make it dirty. Use porn words. Do it all in English language. Respond only with new title: "{title}"'
             )
             new_title = self.generate_reply(title_content)
