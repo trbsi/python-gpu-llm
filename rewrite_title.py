@@ -123,7 +123,7 @@ class TitleProcessor:
                 content += 'Use German language.'
 
             content += (
-                'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.'
+                'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words. Title can be max 50 characters.'
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
                 'Make description and title human like. Like how human would write the description and title for the porn clip.'
                 'Respond in valid JSON format: { "title": "", "description": "" }'
