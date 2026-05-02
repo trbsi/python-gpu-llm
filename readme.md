@@ -33,7 +33,7 @@ screen -S rewrite
 source /workspace/venv/bin/activate
 export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
 export HUGGING_FACE_TOKEN="your_token_here"
-python rewrite_title.py
+python rewrite_title.py --limit=10 --workers=2 --type=title_and_description --lang=en
 ```
 
 ---
