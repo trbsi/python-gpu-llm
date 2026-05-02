@@ -105,6 +105,7 @@ class LlmReplyService:
             output = model.generate(
                 **inputs,
                 max_new_tokens=max_tokens,
+                max_length=None,
                 temperature=0.7,
                 do_sample=True,
                 pad_token_id=tokenizer.eos_token_id,
