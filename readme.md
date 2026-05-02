@@ -26,6 +26,7 @@ This script prepares a GPU server for running a FastAPI-based LLM service with H
 ## Run rewrite_title.py
 
 ```
+apt-get install screen
 git clone https://github.com/trbsi/python-gpu-llm.git
 cd python-gpu-llm
 ./deployment.sh
