@@ -19,6 +19,7 @@ load_dotenv()
 # Run as: python rewrite_title.py --limit 20 --workers 8
 class TitleProcessor:
     DEFAULT_TOKENS = 150
+    BATCH_TITLES = False
 
     def __init__(self, limit: int, workers: int, type: str, lang: str):
         self.limit = limit
