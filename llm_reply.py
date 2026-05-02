@@ -52,7 +52,6 @@ class LlmReplyService:
                     device_map="cuda",
                     quantization_config=bnb_config,
                     torch_dtype=torch.float16,
-                    fix_mistral_regex=True
                 )
             else:
                 model = AutoModelForCausalLM.from_pretrained(
