@@ -23,7 +23,20 @@ This script prepares a GPU server for running a FastAPI-based LLM service with H
 * (Optional) NVIDIA GPU + CUDA
 
 ---
+## Run rewrite_title.py
 
+```
+git clone https://github.com/trbsi/python-gpu-llm.git
+cd python-gpu-llm
+./deployment.sh
+screen -S rewrite
+source /workspace/venv/bin/activate
+export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
+export HUGGING_FACE_TOKEN="your_token_here"
+python rewrite_title.py
+```
+
+---
 ## ⚙️ Environment Variables
 
 Set before running:
@@ -140,17 +153,3 @@ echo $MODEL_NAME
 * auto GPU detection
 * S3 model storage
 
----
-
-## Run rewrite_title.py
-
-```
-screen -S rewrite
-source /workspace/venv/bin/activate
-export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
-export HUGGING_FACE_TOKEN="your_token_here"
-cd python-gpu-llm
-python rewrite_title.py
-```
-
----
