@@ -125,6 +125,8 @@ class TitleProcessor:
                 content += 'Use Portuguese language.'
             elif self.lang == 'de':
                 content += 'Use German language.'
+            elif self.lang == 'ru':
+                content += 'Use Russian language.'
 
             content += (
                 'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words. Title can be max 50 characters.'
