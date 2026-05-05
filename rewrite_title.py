@@ -20,6 +20,7 @@ load_dotenv()
 class TitleProcessor:
     DEFAULT_TOKENS = 150
     BATCH_TITLES = False
+    LAST_ID = 0
 
     def __init__(self, limit: int, workers: int, type: str, lang: str):
         self.limit = limit
@@ -44,9 +45,10 @@ class TitleProcessor:
 
     def fetch_items(self):
         try:
-            response = requests.get(GET_URL, params={"limit": self.limit}, timeout=10)
+            response = requests.get(GET_URL, params={"limit": self.limit, "last_id": self.LAST_ID}, timeout=10)
             response.raise_for_status()
             data = response.json()
+            self.LAST_ID = int(data.get("last_id"))
             return data.get("items", [])
         except Exception as e:
             print(f"Fetch error: {e}")
@@ -79,7 +81,8 @@ class TitleProcessor:
         payload = items
 
         try:
-            response = requests.post(UPDATE_URL, json=payload, timeout=10)
+            url = f"{UPDATE_URL}?lang={self.lang}"
+            response = requests.post(url, json=payload, timeout=10)
             response.raise_for_status()
             print(f"Updated batch size={len(items)}")
         except Exception as e:
