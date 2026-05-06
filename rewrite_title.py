@@ -45,7 +45,8 @@ class TitleProcessor:
 
     def fetch_items(self):
         try:
-            response = requests.get(GET_URL, params={"limit": self.limit, "last_id": self.LAST_ID, "lang": self.lang}, timeout=10)
+            params = {"limit": self.limit, "last_id": self.LAST_ID, "lang": self.lang}
+            response = requests.get(GET_URL, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
             self.LAST_ID = int(data.get("last_id"))
@@ -114,26 +115,25 @@ class TitleProcessor:
             )
             new_description = self.generate_reply(description_content)
         elif self.is_title_and_description():
-            content = ''
             if self.lang == 'en':
-                content += 'Use English language.'
+                content_lang = 'Use English language.'
             elif self.lang == 'hr' or self.lang == 'sr':
-                content += 'Use Serbian language.'
+                content_lang = 'Use Serbian language.'
             elif self.lang == 'es':
-                content += 'Use Spanish language.'
+                content_lang = 'Use Spanish language.'
             elif self.lang == 'pt':
-                content += 'Use Portuguese language.'
+                content_lang = 'Use Portuguese language.'
             elif self.lang == 'de':
-                content += 'Use German language.'
+                content_lang = 'Use German language.'
             elif self.lang == 'ru':
-                content += 'Use Russian language.'
+                content_lang = 'Use Russian language.'
 
-            content += (
+            content = (
                 'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words. Title can be max 50 characters.'
                 'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
                 'Make description and title human like. Like how human would write the description and title for the porn clip.'
-                'Respond in valid JSON format: { "title": "", "description": "" }'
-                f'Original title: "{title}"'
+                'Respond in valid JSON format: { "title": "", "description": "" }.'
+                f'Original title: "{title}". {content_lang}'
             )
             response = self.generate_reply(content)
             response = self.extract_json(response)
