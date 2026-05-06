@@ -25,7 +25,7 @@ sudo apt install -y \
 # -----------------------------
 # Create and activate virtual environment
 # -----------------------------
-VENV_DIR="/workspace/venv"
+VENV_DIR="./venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
