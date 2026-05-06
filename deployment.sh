@@ -67,7 +67,7 @@ export PATH="$HOME/.local/bin:$PATH"
 # -----------------------------
 # Navigate to app
 # -----------------------------
-APP_DIR="/workspace/repo"
+APP_DIR="/workspace/python-gpu-llm"
 cd "$APP_DIR"
 git pull || true
 
