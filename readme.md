@@ -30,10 +30,10 @@ apt-get install screen
 screen -S rewrite
 git clone https://github.com/trbsi/python-gpu-llm.git
 cd python-gpu-llm
-./deployment.sh
-source /workspace/venv/bin/activate
 export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
 export HUGGING_FACE_TOKEN="your_token_here"
+./deployment.sh
+source /workspace/venv/bin/activate
 python rewrite_title.py --limit=10 --workers=2 --type=title_and_description --lang=en
 ```
 
