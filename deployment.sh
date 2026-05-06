@@ -41,7 +41,7 @@ pip install --upgrade pip setuptools wheel
 # -----------------------------
 # Install Python libraries
 # -----------------------------
-pip install torch==2.11.0
+pip install torch==2.5.0
 pip install transformers==5.5.4
 pip install accelerate==1.13.0
 pip install peft==0.19.1
