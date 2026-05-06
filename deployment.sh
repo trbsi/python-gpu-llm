@@ -87,8 +87,8 @@ fi
 export HF_HUB_ENABLE_HF_TRANSFER=1
 #MODEL_DIR="$APP_DIR/model"
 #mkdir -p "$MODEL_DIR"
-echo "Downloading model: $MODEL_NAME"
-hf download "$MODEL_NAME" --repo-type model
+#echo "Downloading model: $MODEL_NAME"
+#hf download "$MODEL_NAME" --repo-type model
 #hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
 
 # -----------------------------
