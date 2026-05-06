@@ -85,9 +85,8 @@ fi
 # -----------------------------
 MODEL_DIR="$APP_DIR/model"
 mkdir -p "$MODEL_DIR"
-
-echo "Downloading model: $MODEL_NAME"
-hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
+#echo "Downloading model: $MODEL_NAME"
+#hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
 
 # -----------------------------
 # Download LoRA (optional)
