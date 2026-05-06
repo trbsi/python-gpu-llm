@@ -45,7 +45,7 @@ class TitleProcessor:
 
     def fetch_items(self):
         try:
-            response = requests.get(GET_URL, params={"limit": self.limit, "last_id": self.LAST_ID}, timeout=10)
+            response = requests.get(GET_URL, params={"limit": self.limit, "last_id": self.LAST_ID, "lang": self.lang}, timeout=10)
             response.raise_for_status()
             data = response.json()
             self.LAST_ID = int(data.get("last_id"))
