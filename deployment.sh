@@ -47,6 +47,7 @@ pip install accelerate==1.13.0
 pip install peft==0.19.1
 pip install bitsandbytes==0.49.2
 pip install huggingface-hub==1.11.0
+pip install huggingface_hub[hf_transfer]
 
 pip install fastapi==0.128.0
 pip install bugsnag==4.8.1
@@ -83,9 +84,11 @@ fi
 # -----------------------------
 # Download base model
 # -----------------------------
-MODEL_DIR="$APP_DIR/model"
-mkdir -p "$MODEL_DIR"
-#echo "Downloading model: $MODEL_NAME"
+export HF_HUB_ENABLE_HF_TRANSFER=1
+#MODEL_DIR="$APP_DIR/model"
+#mkdir -p "$MODEL_DIR"
+echo "Downloading model: $MODEL_NAME"
+hf download "$MODEL_NAME" --repo-type model
 #hf download "$MODEL_NAME" --repo-type model --local-dir "$MODEL_DIR"
 
 # -----------------------------
