@@ -27,10 +27,10 @@ This script prepares a GPU server for running a FastAPI-based LLM service with H
 
 ```
 apt-get install screen
+screen -S rewrite
 git clone https://github.com/trbsi/python-gpu-llm.git
 cd python-gpu-llm
 ./deployment.sh
-screen -S rewrite
 source /workspace/venv/bin/activate
 export MODEL_NAME="dphn/Dolphin-Mistral-24B-Venice-Edition"
 export HUGGING_FACE_TOKEN="your_token_here"
