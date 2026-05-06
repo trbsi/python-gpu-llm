@@ -38,7 +38,8 @@ class LlmReplyService:
             print("Loading tokenizer...")
             tokenizer = AutoTokenizer.from_pretrained(
                 model_name,
-                use_fast=True
+                use_fast=True,
+                fix_mistral_regex=True if "Mistral" in model_name else False
             )
 
             if tokenizer.pad_token is None:
