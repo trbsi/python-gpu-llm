@@ -10,7 +10,7 @@ from llm_reply import LlmReplyService
 GET_URL = "https://peachka.net/movies/api/get-title"
 UPDATE_URL = "https://peachka.net/movies/api/update-title"
 
-SLEEP_SECONDS = 2  # delay between requests
+SLEEP_SECONDS = 10  # delay between requests
 
 load_dotenv()
 
@@ -175,6 +175,7 @@ class TitleProcessor:
                 items = self.fetch_items()
 
                 if not items:
+                    print('No items to process')
                     time.sleep(SLEEP_SECONDS)
                     continue
 
