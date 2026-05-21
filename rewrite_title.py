@@ -17,7 +17,7 @@ load_dotenv()
 
 # Usage: python3 rewrite_title.py --type=title_and_description --lang=en
 class TitleProcessor:
-    DEFAULT_TOKENS = 150
+    DEFAULT_TOKENS = 250
     LAST_ID = 0
 
     def __init__(self, limit: int, type: str, lang: str):
@@ -129,10 +129,14 @@ class TitleProcessor:
                 f'Original title: "{title}"'
                 f'Tags: "{tags}"'
             )
-            response = self.generate_reply(content)
-            response = self.extract_json(response)
-            new_title = response.get("title")
-            new_description = response.get("description")
+            try:
+                response = self.generate_reply(content)
+                response = self.extract_json(response)
+                new_title = response.get("title")
+                new_description = response.get("description")
+            except Exception as e:
+                print(f"Failed to generate title and description: {e}")
+                return None
 
         print(f"{video_id} Generated title: {new_title}")
         print(f"{video_id} Generated description: {new_description}")
