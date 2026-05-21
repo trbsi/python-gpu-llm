@@ -1,6 +1,7 @@
 import argparse
 import re
 import time
+import traceback
 
 import requests
 from dotenv import load_dotenv
@@ -185,6 +186,7 @@ class TitleProcessor:
 
             except Exception as e:
                 print(f"Loop error: {e}")
+                print(traceback.format_exc())
                 time.sleep(SLEEP_SECONDS)
 
 
