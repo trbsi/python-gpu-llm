@@ -117,7 +117,7 @@ class TitleProcessor:
             content = (
                 'Rewrite the title and generate a description for this adult video clip. Use the provided tags to inform both the title and description.'
                 'Title guidelines:'
-                'Rewrite to be SEO-optimized while sounding natural and human — like something a real person would actually type into a search bar. Use title and tags to construct title. '
+                'Rewrite to be SEO-optimized while sounding natural and human. Use title and tags to construct title. '
                 'Use explicit, direct language that matches how adult content is actually searched for. Avoid robotic or overly formal phrasing.'
                 'Description guidelines:'
                 'Write 3–5 sentences in a casual, first-person or observational tone — like a real user or uploader wrote it'
