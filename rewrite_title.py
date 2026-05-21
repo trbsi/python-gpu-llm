@@ -1,11 +1,9 @@
 import argparse
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from dotenv import load_dotenv
-
 from llm_reply import LlmReplyService
 
 GET_URL = "https://peachka.net/movies/api/get-title"
@@ -16,23 +14,18 @@ SLEEP_SECONDS = 2  # delay between requests
 load_dotenv()
 
 
-# Run as: python rewrite_title.py --limit 20 --workers 8
+# Usage: python3 rewrite_title.py --type=title_and_description --lang=en
 class TitleProcessor:
     DEFAULT_TOKENS = 150
-    BATCH_TITLES = False
     LAST_ID = 0
 
-    def __init__(self, limit: int, workers: int, type: str, lang: str):
+    def __init__(self, limit: int, type: str, lang: str):
         self.limit = limit
-        self.workers = workers
         self.type = type
         self.lang = lang
 
         self.llm = LlmReplyService()
         self.llm.init()
-
-    def is_batch_titles(self):
-        return self.type == 'batch_titles'
 
     def is_only_title(self):
         return self.type == 'only_title'
@@ -56,16 +49,10 @@ class TitleProcessor:
             return []
 
     def generate_reply(self, content: str) -> str | None:
-        chat_history = [
-            {
-                "role": "user",
-                "content": content
-            }
-        ]
+        chat_history = [{"role": "user", "content": content}]
 
         try:
-            max_tokens = self.DEFAULT_TOKENS * 10 if self.is_batch_titles() else self.DEFAULT_TOKENS
-            reply = self.llm.get_local_reply(chat_history, max_tokens)
+            reply = self.llm.get_local_reply(chat_history, self.DEFAULT_TOKENS)
             return reply.strip()
         except Exception as e:
             print(f"LLM error: {e}")
@@ -79,11 +66,9 @@ class TitleProcessor:
             ...
         ]
         """
-        payload = items
-
         try:
             url = f"{UPDATE_URL}?lang={self.lang}"
-            response = requests.post(url, json=payload, timeout=10)
+            response = requests.post(url, json=items, timeout=10)
             response.raise_for_status()
             print(f"Updated batch size={len(items)}")
         except Exception as e:
@@ -92,6 +77,7 @@ class TitleProcessor:
     def process_item(self, item):
         video_id = item.get("video_id")
         title = item.get("title")
+        tags = item.get("tags")
 
         if not video_id or not title:
             return None
@@ -129,11 +115,21 @@ class TitleProcessor:
                 content_lang = 'Use Russian language.'
 
             content = (
-                'Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words. Title can be max 50 characters.'
-                'Then generate description, use porn words, be extra dirty, nasty, raw and creative.'
-                'Make description and title human like. Like how human would write the description and title for the porn clip.'
-                'Respond in valid JSON format: { "title": "", "description": "" }.'
-                f'Original title: "{title}". {content_lang}'
+                'Rewrite the title and generate a description for this adult video clip. Use the provided tags to inform both the title and description.'
+                'Title guidelines:'
+                'Rewrite to be SEO-optimized while sounding natural and human — like something a real person would actually type into a search bar'
+                'Keep the core meaning and scene intact'
+                'Use explicit, direct language that matches how adult content is actually searched for'
+                'Avoid robotic or overly formal phrasing'
+                'Description guidelines:'
+                'Write 3–5 sentences in a casual, first-person or observational tone — like a real user or uploader wrote it'
+                'Lead with the most searchable/compelling detail'
+                'Weave in relevant tags naturally (don\'t just list them)'
+                'Be vivid and specific to the actual scene'
+                'End with something that drives clicks or curiosity'
+                'Format — respond only in valid JSON: { "title": "", "description": "" }'
+                f'Original title: "{title}"'
+                f'Tags: "{tags}"'
             )
             response = self.generate_reply(content)
             response = self.extract_json(response)
@@ -156,13 +152,11 @@ class TitleProcessor:
 
         text = text.strip().replace("```json", "").replace("```", "").strip()
 
-        # Try direct parse first (fast path)
         try:
             return json.loads(text)
         except:
             pass
 
-        # Fallback: extract first JSON-like structure
         for pattern in [r'\[.*\]', r'\{.*\}']:
             match = re.search(pattern, text, re.DOTALL)
             if match:
@@ -173,12 +167,6 @@ class TitleProcessor:
 
         return None
 
-    def build_titles_text(self, items):
-        return "\n".join(
-            f"{item['video_id']}. {item['title']}"
-            for i, item in enumerate(items)
-        )
-
     def run(self):
         while True:
             try:
@@ -188,61 +176,12 @@ class TitleProcessor:
                     time.sleep(SLEEP_SECONDS)
                     continue
 
-                # =========================
-                # 🔥 BATCH MODE (NEW)
-                # =========================
-                if self.BATCH_TITLES:
-                    titles_text = self.build_titles_text(items)
-
-                    prompt = (
-                        "Rewrite title column to be SEO friendly and different but keep same meaning, make it dirty, nasty and raw, use porn words.\n"
-                        "Then generate description, use porn words, be extra dirty, nasty, raw and creative.\n"
-                        'Return ONLY valid JSON array:[{"video_id": ..., "title": "...", "description": "..."}]'
-                        "\n"
-                        f"Titles:\n{titles_text}"
-                    )
-
-                    response = self.generate_reply(prompt)
-                    response = self.extract_json(response)
-                    print(response)
-
-                    if not response:
-                        print("Batch JSON parse failed")
-                        continue
-
-                    # If model does NOT return video_id, map manually
-                    processed_batch = []
-
-                    for i, item in enumerate(items):
-                        if i < len(response):
-                            r = response[i]
-                            processed_batch.append({
-                                "video_id": item["video_id"],
-                                "title": r.get("title"),
-                                "description": r.get("description"),
-                            })
-
-                    if processed_batch:
-                        self.update_items(processed_batch)
-
-                    time.sleep(SLEEP_SECONDS)
-                    continue
-
-                # =========================
-                # 🔥 PARALLEL MODE (OLD)
-                # =========================
                 processed_batch = []
 
-                with ThreadPoolExecutor(max_workers=self.workers) as executor:
-                    futures = [executor.submit(self.process_item, item) for item in items]
-
-                    for future in as_completed(futures):
-                        try:
-                            result = future.result()
-                            if result:
-                                processed_batch.append(result)
-                        except Exception as e:
-                            print(f"Worker error: {e}")
+                for item in items:
+                    result = self.process_item(item)
+                    if result:
+                        processed_batch.append(result)
 
                 if processed_batch:
                     self.update_items(processed_batch)
@@ -252,11 +191,9 @@ class TitleProcessor:
                 time.sleep(SLEEP_SECONDS)
 
 
-# Usage: python3 rewrite_title --type=title_and_description --lang=en
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
-    parser.add_argument("--workers", type=int, default=5)
     parser.add_argument("--type", type=str, default='only_title')
     parser.add_argument("--lang", type=str, default='en')
 
@@ -264,7 +201,6 @@ if __name__ == "__main__":
 
     processor = TitleProcessor(
         limit=args.limit,
-        workers=args.workers,
         type=args.type,
         lang=args.lang,
     )
