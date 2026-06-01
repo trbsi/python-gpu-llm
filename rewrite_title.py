@@ -2,7 +2,6 @@ import argparse
 import re
 import time
 import traceback
-
 import requests
 from dotenv import load_dotenv
 from llm_reply import LlmReplyService
@@ -10,15 +9,31 @@ from llm_reply import LlmReplyService
 GET_URL = "https://peachka.net/movies/api/get-title"
 UPDATE_URL = "https://peachka.net/movies/api/update-title"
 
-SLEEP_SECONDS = 10  # delay between requests
+SLEEP_SECONDS = 10
 
 load_dotenv()
 
 
-# Usage: python3 rewrite_title.py --type=title_and_description --lang=en
 class TitleProcessor:
     DEFAULT_TOKENS = 250
     LAST_ID = 0
+
+    # ✅ SYSTEM PROMPT (sent once per request)
+    SYSTEM_PROMPT = """
+You are a high-throughput metadata rewriting engine for adult video content.
+
+TASK:
+- Rewrite titles to be SEO-friendly, natural, and explicit
+- Generate descriptions based on title and tags
+- Return ONLY valid JSON:
+  {"title": "...", "description": "..."}
+
+STYLE:
+- Human-like, not robotic
+- Search-optimized adult wording
+- 3–5 sentence description
+- No extra text outside JSON
+"""
 
     def __init__(self, limit: int, type: str, lang: str):
         self.limit = limit
@@ -28,52 +43,85 @@ class TitleProcessor:
         self.llm = LlmReplyService()
         self.llm.init()
 
+    # -------------------------
+    # TYPE HELPERS
+    # -------------------------
+
     def is_only_title(self):
-        return self.type == 'only_title'
+        return self.type == "only_title"
 
     def is_only_description(self):
-        return self.type == 'only_description'
+        return self.type == "only_description"
 
     def is_title_and_description(self):
-        return self.type == 'title_and_description'
+        return self.type == "title_and_description"
+
+    # -------------------------
+    # API FETCH
+    # -------------------------
 
     def fetch_items(self):
         try:
-            params = {"limit": self.limit, "last_id": self.LAST_ID, "lang": self.lang}
+            params = {
+                "limit": self.limit,
+                "last_id": self.LAST_ID,
+                "lang": self.lang,
+            }
+
             response = requests.get(GET_URL, params=params, timeout=10)
             response.raise_for_status()
+
             data = response.json()
-            self.LAST_ID = int(data.get("last_id"))
+            self.LAST_ID = int(data.get("last_id", self.LAST_ID))
+
             return data.get("items", [])
+
         except Exception as e:
             print(f"Fetch error: {e}")
             return []
 
-    def generate_reply(self, content: str) -> str | None:
-        chat_history = [{"role": "user", "content": content}]
+    # -------------------------
+    # LLM CALL (OPTIMIZED)
+    # -------------------------
 
+    def generate_reply(self, user_content: str) -> str | None:
+        """
+        Only sends:
+        - 1 system prompt (short, reused)
+        - 1 minimal user payload
+        """
         try:
+            chat_history = [
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ]
+
             reply = self.llm.get_local_reply(chat_history, self.DEFAULT_TOKENS)
-            return reply.strip()
+
+            return reply.strip() if reply else None
+
         except Exception as e:
             print(f"LLM error: {e}")
             return None
 
+    # -------------------------
+    # UPDATE API
+    # -------------------------
+
     def update_items(self, items: list[dict]):
-        """
-        items format:
-        [
-            {"video_id": 1, "title": "new title", "description": "new description"},
-            ...
-        ]
-        """
         try:
             url = f"{UPDATE_URL}?lang={self.lang}"
             response = requests.post(url, json=items, timeout=10)
             response.raise_for_status()
+
             print(f"Updated batch size={len(items)}")
+
         except Exception as e:
             print(f"Update error: {e}")
+
+    # -------------------------
+    # PROCESS SINGLE ITEM (OPTIMIZED)
+    # -------------------------
 
     def process_item(self, item):
         video_id = item.get("video_id")
@@ -84,63 +132,34 @@ class TitleProcessor:
             return None
 
         print(f"Processing: {video_id} -> {title}")
-        new_title = None
-        new_description = None
 
-        if self.is_only_title():
-            title_content = (
-                "Rewrite title column to be SEO friendly and different but keep same meaning. Make description human like. Like how human would write the title for the porn clip. Title can be max 50 characters."
-                f'Make it dirty. Use porn words. Do it all in English language. Respond only with new title: "{title}"'
-            )
-            new_title = self.generate_reply(title_content)
-            if not new_title:
-                return None
-        elif self.is_only_description():
-            description_content = (
-                'Use porn words, be extra dirty, nasty, raw and creative. Make description human like. Like how human would describe the porn clip.'
-                f'Give me a description of a porn clip for the title, reply only with description, up to 150 words, make sure to end sentence with a dot. Do it all in English language. Title is: "{title}"'
-            )
-            new_description = self.generate_reply(description_content)
-        elif self.is_title_and_description():
-            if self.lang == 'en':
-                content_lang = 'Use English language.'
-            elif self.lang == 'hr' or self.lang == 'sr':
-                content_lang = 'Use Serbian language.'
-            elif self.lang == 'es':
-                content_lang = 'Use Spanish language.'
-            elif self.lang == 'pt':
-                content_lang = 'Use Portuguese language.'
-            elif self.lang == 'de':
-                content_lang = 'Use German language.'
-            elif self.lang == 'ru':
-                content_lang = 'Use Russian language.'
+        # 🔥 minimal input only (no long prompt engineering per item)
+        user_prompt = (
+            f"title: {title}\n"
+            f"tags: {tags}\n"
+            f"language: {self.lang}\n"
+        )
 
-            content = (
-                'Rewrite the title and generate a description for this adult video clip. Use the provided tags to inform both the title and description.'
-                'Title guidelines:'
-                'Rewrite to be SEO-optimized while sounding natural and human. Use title and tags to construct title. '
-                'Use explicit, direct language that matches how adult content is actually searched for. Avoid robotic or overly formal phrasing.'
-                'Description guidelines:'
-                'Write 3–5 sentences in a casual, first-person or observational tone — like a real user or uploader wrote it'
-                'Lead with the most searchable/compelling detail'
-                'Weave in relevant tags naturally (don\'t just list them)'
-                'Be vivid and specific to the actual scene'
-                'Format — respond only in valid JSON: { "title": "", "description": "" }'
-                f'Original title: "{title}"'
-                f'Tags: "{tags}"'
-            )
-            try:
-                response = self.generate_reply(content)
-                response = self.extract_json(response)
-                new_title = response.get("title")
-                new_description = response.get("description")
-            except Exception as e:
-                print(f"Failed to generate title and description: {e}")
+        try:
+            response = self.generate_reply(user_prompt)
+
+            if not response:
                 return None
+
+            data = self.extract_json(response)
+
+            if not data:
+                return None
+
+            new_title = data.get("title")
+            new_description = data.get("description")
+
+        except Exception as e:
+            print(f"Failed to process {video_id}: {e}")
+            return None
 
         print(f"{video_id} Generated title: {new_title}")
-        print(f"{video_id} Generated description: {new_description}")
-        print("")
+        print(f"{video_id} Generated description: {new_description}\n")
 
         return {
             "lang": self.lang,
@@ -149,25 +168,38 @@ class TitleProcessor:
             "description": new_description,
         }
 
+    # -------------------------
+    # JSON PARSER (ROBUST)
+    # -------------------------
+
     def extract_json(self, text: str):
         import json
 
-        text = text.strip().replace("```json", "").replace("```", "").strip()
+        if not text:
+            return None
+
+        text = text.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
 
         try:
             return json.loads(text)
-        except:
+        except Exception:
             pass
 
-        for pattern in [r'\[.*\]', r'\{.*\}']:
+        # fallback extraction
+        for pattern in [r"\{.*\}", r"\[.*\]"]:
             match = re.search(pattern, text, re.DOTALL)
             if match:
                 try:
                     return json.loads(match.group(0))
-                except:
+                except Exception:
                     continue
 
         return None
+
+    # -------------------------
+    # MAIN LOOP
+    # -------------------------
 
     def run(self):
         while True:
@@ -175,7 +207,7 @@ class TitleProcessor:
                 items = self.fetch_items()
 
                 if not items:
-                    print('No items to process')
+                    print("No items to process")
                     time.sleep(SLEEP_SECONDS)
                     continue
 
@@ -195,11 +227,16 @@ class TitleProcessor:
                 time.sleep(SLEEP_SECONDS)
 
 
+# -------------------------
+# ENTRYPOINT
+# -------------------------
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--limit", type=int, default=10)
-    parser.add_argument("--type", type=str, default='only_title')
-    parser.add_argument("--lang", type=str, default='en')
+    parser.add_argument("--type", type=str, default="only_title")
+    parser.add_argument("--lang", type=str, default="en")
 
     args = parser.parse_args()
 
@@ -208,4 +245,5 @@ if __name__ == "__main__":
         type=args.type,
         lang=args.lang,
     )
+
     processor.run()
