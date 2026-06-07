@@ -128,7 +128,7 @@ STYLE:
         title = item.get("title")
         tags = item.get("tags")
 
-        if not video_id or not title:
+        if not video_id or not title or not tags:
             return None
 
         print(f"Processing: {video_id} -> {title}")
