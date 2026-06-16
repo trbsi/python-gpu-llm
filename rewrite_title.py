@@ -15,24 +15,36 @@ load_dotenv()
 
 
 class TitleProcessor:
-    DEFAULT_TOKENS = 250
+    DEFAULT_TOKENS = 350
     LAST_ID = 0
 
     # ✅ SYSTEM PROMPT (sent once per request)
     SYSTEM_PROMPT = """
-You are a high-throughput metadata rewriting engine for adult video content.
+You are a metadata rewriting engine for adult video content.
+
+INPUT:
+- language: 2 letter ISO code 
+- tags: JSON
+
+TAGS:
+- participants[].role = performer archetype (daddy, otter, twink, bear, etc.)
+- participants[].appearance = physical traits (hairy, smooth, muscular, slim)
+- acts[] = interactions between participants
+- acts[].act = sexual act (blowjob, deepthroat, face fuck, rimjob)
+- acts[].position = context of act (anal, oral, missionary, doggy)
+- acts[].kink = modifiers (condom, crossdress, verbal, bareback)
+- setting[] = scene location/environment (dark room, bedroom, hotel)
+- category[] = additional categories (amateur, homemade, professional)
 
 TASK:
-- Rewrite titles to be SEO-friendly, natural, and explicit
-- Generate descriptions based on title and tags
-- Return ONLY valid JSON:
-  {"title": "...", "description": "..."}
+- Rewrite title to be SEO-friendly and natural.
+- Generate a 3-5 sentence description using tags.
+- Convert tags into fluent prose, not tag lists.
+- Mention important roles, appearances, acts, kinks, and setting when relevant.
 
-STYLE:
-- Human-like, not robotic
-- Search-optimized adult wording
-- 3–5 sentence description
-- No extra text outside JSON
+OUTPUT:
+Return ONLY valid JSON:
+{"title":"...","description":"..."}
 """
 
     def __init__(self, limit: int, type: str, lang: str):
@@ -135,9 +147,8 @@ STYLE:
 
         # 🔥 minimal input only (no long prompt engineering per item)
         user_prompt = (
-            f"title: {title}\n"
-            f"tags: {tags}\n"
             f"language: {self.lang}\n"
+            f"tags: {tags}\n"
         )
 
         try:
