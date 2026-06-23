@@ -5,6 +5,7 @@ import traceback
 import requests
 from dotenv import load_dotenv
 from llm_reply import LlmReplyService
+import json
 
 GET_URL = "https://peachka.net/movies/api/get-title"
 UPDATE_URL = "https://peachka.net/movies/api/update-title"
@@ -138,7 +139,7 @@ Return ONLY valid JSON:
     def process_item(self, item):
         video_id = item.get("video_id")
         title = item.get("title")
-        tags = item.get("tags")
+        tags = json.dumps(item.get("tags"))
 
         if not video_id or not title or not tags:
             return None
